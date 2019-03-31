@@ -66,16 +66,16 @@
     <string id="33031">Указан некорректный путь для загружаемых файлов (проверьте настройки)</string>
     <string id="33032">Папка для загружаемых файлов не должна совпадать с папкой для временных файлов</string>
 
-    <string id="33040">Невозможно подключиться с движку AceStream</string>
-    <string id="33041">Невозможно отправить данные движку AceStream</string>
-    <string id="33042">Невозможно найти исполняемый файл движка AceStream</string>
-    <string id="33043">Невозможно запустить движок AceStream</string>
+    <string id="33040">Невозможно подключиться с движку TorrServer</string>
+    <string id="33041">Невозможно отправить данные движку TorrServer</string>
+    <string id="33042">Невозможно найти исполняемый файл движка TorrServer</string>
+    <string id="33043">Невозможно запустить движок TorrServer</string>
     <string id="33044">Время ожидания истекло</string>
     <string id="33045">Невозможно загрузить торрент (смотри журнал)</string>
     <string id="33046">Невозможно проиграть торрент (смотри журнал)</string>
     <string id="33047">Указан некорректный путь для загрузки файлов (проверьте настройки)</string>
     <string id="33048">Указан неверный номер файла</string>
-    <string id="33049">Ошибка AceStream (%s)</string>
+    <string id="33049">Ошибка TorrServer (%s)</string>
     <string id="33050">Проигрываемые файлы в торренте не обнаружены</string>
 
     <string id="34003">&lt;&lt; Назад</string>
@@ -95,7 +95,7 @@
     <string id="40100">Просмотр</string>
     <string id="40101">Использовать движок для просмотра</string>
     <string id="40102">Torrent2Http</string>
-    <string id="40103">Ace Stream</string>
+    <string id="40103">TorrServer</string>
     <string id="40104">Порт для входящих соединений</string>
     <string id="40105">Использовать случайный порт</string>
     <string id="40106">Ограничить количество соединений</string>

@@ -43,13 +43,13 @@ def torrent_client():
 
 
 @singleton
-def acestream_engine():
-    import acestream
+def ts_engine():
+    import torrserve
     from support.common import temp_path
 
-    return acestream.Engine(host=plugin.get_setting('as-host', unicode),
-                            port=plugin.get_setting('as-port', int, default=62062),
-                            save_path=temp_path() if plugin.get_setting('save-files', int) else None)
+    return torrserve.Engine(host=plugin.get_setting('ts-host', unicode),
+                            port=plugin.get_setting('ts-port', int, default=8090),
+                            )
 
 
 @singleton
@@ -68,12 +68,13 @@ def stream_playing_progress():
 
 
 @singleton
-def ace_stream():
-    from support.torrent.stream import AceStream
+def ts_stream():
+    from support.torrent.stream import TorrServeStream
 
-    return AceStream(engine=acestream_engine(),
+    return TorrServeStream(engine=ts_engine(),
                      buffering_progress=stream_buffering_progress(),
-                     playing_progress=stream_playing_progress())
+                     playing_progress=stream_playing_progress(),
+                     pre_buffer_bytes=plugin.get_setting('ts-preload-mb', int))
 
 
 @singleton
@@ -113,7 +114,7 @@ def torrent_stream():
     """
     :rtype : TorrentStream
     """
-    stream = plugin.get_setting('torrent-stream', choices=(torrent2http_stream, ace_stream))
+    stream = plugin.get_setting('torrent-stream', choices=(torrent2http_stream, ts_stream))
     return stream()
 
 

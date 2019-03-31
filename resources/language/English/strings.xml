@@ -66,16 +66,16 @@
     <string id="33031">Invalid path for downloaded files specified (check the settings)</string>
     <string id="33032">Path for downloaded files and temporary path should not be the same</string>
 
-    <string id="33040">Can't connect to AceStream engine</string>
-    <string id="33041">Can't send data to AceStream engine</string>
-    <string id="33042">Can't find AceStream engine executable</string>
-    <string id="33043">Can't start AceStream engine</string>
+    <string id="33040">Can't connect to TorrServer</string>
+    <string id="33041">Can't send data to TorrServer</string>
+    <string id="33042">Can't find TorrServer executable</string>
+    <string id="33043">Can't start TorrServer</string>
     <string id="33044">Time out</string>
     <string id="33045">Can't load torrent (see log)</string>
     <string id="33046">Can't play torrent (see log)</string>
     <string id="33047">Invalid download path specified (check the settings)</string>
     <string id="33048">Invalid file index</string>
-    <string id="33049">AceStream error (%s)</string>
+    <string id="33049">TorrServer error (%s)</string>
     <string id="33050">No playable files detected</string>
 
     <string id="34003">&lt;&lt; Previous</string>
@@ -95,7 +95,7 @@
     <string id="40100">Streaming</string>
     <string id="40101">Use engine for streaming</string>
     <string id="40102">Torrent2Http</string>
-    <string id="40103">Ace Stream</string>
+    <string id="40103">TorrServer</string>
     <string id="40104">Port for incoming connections</string>
     <string id="40105">Use random port</string>
     <string id="40106">Limit connections count</string>

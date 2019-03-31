@@ -70,7 +70,7 @@ TorrentLink = namedtuple('TorrentLink', ['quality', 'url', 'size'])
 
 
 class LostFilmScraper(AbstractScraper):
-    BASE_URL = "http://www.lostfilm.tv"
+    BASE_URL = "http://old.lostfilm.tv"
     LOGIN_URL = "http://login1.bogi.ru/login.php"
     BLOCKED_MESSAGE = "Контент недоступен на территории Российской Федерации"
 
@@ -119,7 +119,7 @@ class LostFilmScraper(AbstractScraper):
         with Timer(logger=self.log, name='Authorization'):
             self.fetch(self.BASE_URL + '/browse.php')
             doc = self.fetch(self.LOGIN_URL,
-                             params={'referer': 'http://www.lostfilm.tv/'},
+                             params={'referer': 'http://old.lostfilm.tv/'},
                              data={'login': self.login, 'password': self.password})
             action_url = doc.find('form').attr('action')
             names = doc.find('input', {'type': 'hidden'}).attrs('name')
@@ -183,7 +183,11 @@ class LostFilmScraper(AbstractScraper):
         return ids
 
     def _get_series_doc(self, series_id):
-        return self.fetch(self.BASE_URL + "/browse.php", {'cat': series_id})
+	try:
+		res =  self.fetch(self.BASE_URL + "/browse.php", {'cat': series_id})
+	except ScraperError:
+		res =  self.fetch(self.BASE_URL + "/browse.php", {'cat': '_' + str(series_id)})
+        return res
 
     def get_series_episodes(self, series_id):
         doc = self._get_series_doc(series_id)
@@ -200,7 +204,7 @@ class LostFilmScraper(AbstractScraper):
                 episode_title, orig_title = parse_title(title_td.text)
                 onclick = title_td.attr('onClick')
                 release_date = ep.find('span', {'class': 'micro'}).find('span')[0].text
-                release_date = str_to_date(release_date, '%d.%m.%Y %H:%M') if release_date else None
+                release_date = str_to_date(release_date, '%d.%m.%Y') if release_date else None
                 _, season_number, episode_number = parse_onclick(onclick)
                 poster = poster_url(original_title, season_number)
                 if not series_poster:
