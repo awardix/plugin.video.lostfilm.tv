@@ -95,7 +95,7 @@ class BaseEngine(object):
 
 
 class Engine(BaseEngine):
-    def __init__(self, uri=None, host='127.0.0.1', port=8090, pre_buffer_bytes=0):
+    def __init__(self, uri=None, host='127.0.0.1', port=8090, pre_buffer_bytes=None):
         self.uri = uri
         self.host = host
         self.port = port
@@ -140,6 +140,8 @@ class Engine(BaseEngine):
     def start_preload(self, url):
         def download_stream():
             full_url = self.make_url(url)
+            if self.preload_size:
+                full_url = full_url.replace('/preload/', '/preload/{0}/'.format(self.preload_size))
             req = requests.get(full_url, stream=True)
             for chunk in req.iter_content(chunk_size=128):
                 self.log('dowload chunk: 128')

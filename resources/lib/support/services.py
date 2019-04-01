@@ -49,7 +49,7 @@ def ts_engine():
 
     return torrserve.Engine(host=plugin.get_setting('ts-host', unicode),
                             port=plugin.get_setting('ts-port', int, default=8090),
-                            )
+                            pre_buffer_bytes=plugin.get_setting('ts-preload-mb', int))
 
 
 @singleton
