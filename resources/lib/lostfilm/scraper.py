@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from collections import namedtuple
 import hashlib
 import re
+import json
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from support.common import str_to_date, Attribute
@@ -58,8 +59,8 @@ class Quality(Attribute):
     def get_lang_base(self):
         return 40208
 
-    SD = (0, 'sd')
-    HD_720 = (1, 'mp4', 'hd')
+    SD = (0, 'sd', 'SD')
+    HD_720 = (1, 'mp4', 'HD', 'MP4')
     HD_1080 = (2, '1080p', '1080')
 
     def __lt__(self, other):
@@ -71,7 +72,7 @@ TorrentLink = namedtuple('TorrentLink', ['quality', 'url', 'size'])
 
 class LostFilmScraper(AbstractScraper):
     BASE_URL = "http://old.lostfilm.tv"
-    LOGIN_URL = "http://login1.bogi.ru/login.php"
+    LOGIN_URL = "http://www.lostfilm.tv/ajaxik.php"
     BLOCKED_MESSAGE = "Контент недоступен на территории Российской Федерации"
 
     def __init__(self, login, password, cookie_jar=None, xrequests_session=None, series_cache=None, max_workers=10,
@@ -85,6 +86,7 @@ class LostFilmScraper(AbstractScraper):
         self.has_more = None
         self.anonymized_urls = anonymized_urls if anonymized_urls is not None else []
         self.session.headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.116 Safari/537.36'
+        self.session.headers['Origin'] = 'http://www.lostfilm.tv'
         self.session.add_proxy_need_check(self._check_content_is_blocked)
         self.session.add_proxy_validator(self._validate_proxy)
 
@@ -108,30 +110,33 @@ class LostFilmScraper(AbstractScraper):
         else:
             return False
 
-    def fetch(self, url, params=None, data=None, **request_params):
+    def fetch(self, url, params=None, data=None, forced_encoding=None, **request_params):
         self.response = super(LostFilmScraper, self).fetch(url, params, data, **request_params)
         encoding = self.response.encoding
+
         if encoding == 'ISO-8859-1':
             encoding = 'windows-1251'
+        if forced_encoding:
+            encoding = forced_encoding
         return HtmlDocument.from_string(self.response.content, encoding)
 
     def authorize(self):
         with Timer(logger=self.log, name='Authorization'):
-            self.fetch(self.BASE_URL + '/browse.php')
-            doc = self.fetch(self.LOGIN_URL,
-                             params={'referer': 'http://old.lostfilm.tv/'},
-                             data={'login': self.login, 'password': self.password})
-            action_url = doc.find('form').attr('action')
-            names = doc.find('input', {'type': 'hidden'}).attrs('name')
-            values = doc.find('input', {'type': 'hidden'}).attrs('value')
-            params = zip(names, [ensure_str(s) for s in values])
-            if not action_url or not names or not values:
-                self.log.debug(doc)
-                raise ScraperError(32003, "Authorization failed", check_settings=True)
-            self.fetch(action_url, data=params)
-            self.session.cookies['hash'] = self.authorization_hash
+            if '@' not in self.login:
+                raise ScraperError(32019, "E-Mail %s not contain @" % self.login, self.login, check_settings=True)
             if not self.authorized():
-                raise ScraperError(32003, "Authorization failed", check_settings=True)
+                doc = self.fetch(self.LOGIN_URL, data={'act': 'users', 'type': 'login',
+                                                       'mail': self.login.replace('@', '%40'),
+                                                       'pass': self.password, 'rem': '1'})
+                res = json.loads(str(doc))
+
+                if res.get('success'):
+                    self.session.cookies['hash'] = self.authorization_hash
+                elif res.get('need_captcha'):
+                    self.log.debug('NEEEED CAPTCHA')
+                else:
+                    self.log.debug(res)
+                    raise ScraperError(32003, "Authorization failed", check_settings=True)
 
     @property
     def authorization_hash(self):
@@ -139,7 +144,7 @@ class LostFilmScraper(AbstractScraper):
 
     def authorized(self):
         cookies = self.session.cookies
-        if not cookies.get('uid') or not cookies.get('pass'):
+        if not cookies.get('lf_session'):
             return False
         if cookies.get('hash') != self.authorization_hash:
             try:
@@ -183,10 +188,7 @@ class LostFilmScraper(AbstractScraper):
         return ids
 
     def _get_series_doc(self, series_id):
-	try:
-		res =  self.fetch(self.BASE_URL + "/browse.php", {'cat': series_id})
-	except ScraperError:
-		res =  self.fetch(self.BASE_URL + "/browse.php", {'cat': '_' + str(series_id)})
+        res =  self.fetch(self.BASE_URL + "/browse.php", {'cat': series_id})
         return res
 
     def get_series_episodes(self, series_id):
@@ -206,7 +208,7 @@ class LostFilmScraper(AbstractScraper):
                 release_date = ep.find('span', {'class': 'micro'}).find('span')[0].text
                 release_date = str_to_date(release_date, '%d.%m.%Y') if release_date else None
                 _, season_number, episode_number = parse_onclick(onclick)
-                poster = poster_url(original_title, season_number)
+                poster = img_url(series_id, season_number, episode_number)
                 if not series_poster:
                     series_poster = poster
                 episode = Episode(series_id, series_title, season_number, episode_number, episode_title,
@@ -263,7 +265,7 @@ class LostFilmScraper(AbstractScraper):
             episodes_count = len(body.find('div', {'class': 't_row.*?'})) - \
                 len(body.find('label', {'title': 'Сезон полностью'}))
 
-            poster = poster_url(original_title, seasons_count)
+            poster = img_url(series_id, seasons_count, 99)
             series = Series(series_id, series_title, original_title, image, icon, poster, country, year,
                             genres, about, actors, producers, writers, plot, seasons_count, episodes_count)
 
@@ -282,15 +284,16 @@ class LostFilmScraper(AbstractScraper):
             episode_titles, original_titles = zip(*[parse_title(t) for t in titles])
             release_dates = body.find('b').strings[1::3]
             release_dates = [str_to_date(d, '%d.%m.%Y %H:%M') for d in release_dates]
+
             selected_page = body.find('span', {'class': 'd_pages_link_selected'}).text
             last_page = body.find('a', {'class': 'd_pages_link'}).last.text
             self.has_more = int(selected_page) < int(last_page)
-            icons = body.find('img', {'class': 'category_icon'}).attrs('src')
             onclicks = body.find('a', {'href': 'javascript:{};'}).attrs('onClick')
+
+            icons = body.find('img', {'class': 'category_icon'}).attrs('src')
             series_ids, season_numbers, episode_numbers = zip(*[parse_onclick(s or "") for s in onclicks])
-            posters = [poster_url(i[0][18:-5], i[1]) for i in zip(icons, season_numbers)]
-            icons = [self.BASE_URL + url for url in icons]
-            images = [url.replace('/icons/cat_', '/posters/poster_') for url in icons]
+            posters = [img_url(i, y, z if int(z) >= 10 else z[1:]) for i, y, z in zip(series_ids, season_numbers, episode_numbers)]
+            images = ['http://static.lostfilm.tv/Images/'+str(series_id)+'/Posters/poster.jpg' for series_id in series_ids]
             data = zip(series_ids, series_titles, season_numbers,
                        episode_numbers, episode_titles, original_titles, release_dates, icons, posters, images)
             episodes = [Episode(*e) for e in data if e[0]]
@@ -299,18 +302,19 @@ class LostFilmScraper(AbstractScraper):
         return episodes
 
     def get_torrent_links(self, series_id, season_number, episode_number):
-        doc = self.fetch(self.BASE_URL + '/nrdr.php', {
+        doc = self.fetch('http://www.lostfilm.tv/v_search.php', {
             'c': series_id,
             's': season_number,
             'e': episode_number
         })
+        redirect = doc.find('a').attr('href')
+        doc = self.fetch(redirect, forced_encoding='utf-8')
         links = []
         with Timer(logger=self.log, name='Parsing torrent links'):
-            urls = doc.find('a', {'style': 'font-size:18px;.*?'}).attrs('href')
-            table = doc.find('table')
-            qualities = table.find('img', {'src': 'img/search_.+?'}).attrs('src')
-            qualities = [s[11:-4] for s in qualities]
-            sizes = re.findall('Размер: (.+)\.', table.text)
+            row = doc.find('div', {'class': 'inner-box--item'})
+            qualities = row.find('div', {'class': 'inner-box--label'}).strings
+            urls = row.find('div', {'class': 'inner-box--link sub'}).strings
+            sizes = re.findall('(\\d+\\.\\d+ ..)', row.text)
             for url, qua, size in zip(urls, qualities, sizes):
                 links.append(TorrentLink(Quality.find(qua), url, parse_size(size)))
             self.log.info("Got %d link(s) successfully" % (len(links)))
@@ -334,6 +338,8 @@ def parse_onclick(s):
         return 0, 0, ""
 
 
-def poster_url(original_title, season):
-    return 'http://i551.photobucket.com/albums/ii448/suslikcorp/lostfilm/posters/%s-s%02d-lostfilm.jpg' \
-           % (re.sub(r'[^a-z]+', '', original_title.lower()), season)
+def img_url(series_id, season, episode):
+    if episode == 99 or episode == "99":
+        return 'http://static.lostfilm.tv/Images/{0}/Posters/shmoster_s{1}.jpg'.format(series_id, season)
+    else:
+        return 'http://static.lostfilm.tv/Images/{0}/Posters/e_{1}_{2}.jpg'.format(series_id, season, episode)

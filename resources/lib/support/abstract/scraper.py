@@ -82,9 +82,9 @@ def parse_size(size):
         return long(size)
     else:
         num, qua = size[:-2].rstrip(), lowercase(size[-2:])
-        if qua == 'mb' or qua == 'мб':
+        if qua == 'mb' or qua == 'мб' or qua == u'мб':
             return long(float(num) * 1024 * 1024)
-        elif qua == 'gb' or qua == 'гб':
+        elif qua == 'gb' or qua == 'гб' or qua == u'гб':
             return long(float(num) * 1024 * 1024 * 1024)
-        elif qua == 'tb' or qua == 'тб':
+        elif qua == 'tb' or qua == 'тб' or qua == u'тб':
             return long(float(num) * 1024 * 1024 * 1024 * 1024)

@@ -167,7 +167,10 @@ class Engine(BaseEngine):
                 time.sleep(0.5)
 
     def list_files(self):
-        lst = self.get()['Files']
+        try:
+            lst = self.get()['Files']
+        except Exception:
+            return None
 
         res = [FileStatus(index=index, **f)
             for index, f in enumerate(lst)]
