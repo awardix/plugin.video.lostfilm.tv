@@ -195,9 +195,7 @@ class Plugin(XBMCMixin):
         # To accomdate self.redirect, we need to be able to parse a full url as
         # well
         if url is None:
-            url = sys.argv[0]
-            if len(sys.argv) == 3:
-                url += sys.argv[2]
+            url = sys.argv[0] + sys.argv[2]
         if handle is None:
             handle = sys.argv[1]
         return Request(url, handle)
