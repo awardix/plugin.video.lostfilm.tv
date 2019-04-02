@@ -1,3 +1,6 @@
+[B]Версия 1.0.2[/B]
+* Авторизация по E-Mail на www.lostfilm.tv вместо old.lostfilm.tv
+
 [B]Версия 1.0.1[/B]
 * Настройки прелоада для TorrServe
 
