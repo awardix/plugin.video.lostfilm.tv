@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+import os
 from collections import namedtuple
 from contextlib import closing
 from support.mediadb import VideoDatabase, ScraperSettings, TvDbScraperSettings, TmDbScraperSettings
@@ -34,6 +34,11 @@ class Sources(object):
     SOURCES_REAL_PATH = xbmc.translatePath(SOURCES_XML_PATH)
 
     def __init__(self):
+        if os.path.exists(self.SOURCES_REAL_PATH):
+            self.xml_tree = ET.parse(self.SOURCES_REAL_PATH)
+        else:
+            with closing(open(self.SOURCES_REAL_PATH, 'w')) as fd:
+                fd.write('<sources><programs><default pathversion="1"></default></programs><video><default pathversion="1"></default></video> <music><default pathversion="1"></default>  </music>    <pictures>        <default pathversion="1"></default>    </pictures>    <files>        <default pathversion="1"></default>    </files>    <games>        <default pathversion="1"></default>    </games></sources>')
         self.xml_tree = ET.parse(self.SOURCES_REAL_PATH)
         self.sources = None
 
