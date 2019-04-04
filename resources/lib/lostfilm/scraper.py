@@ -7,7 +7,7 @@ import re
 import json
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from support.common import str_to_date, Attribute
+from support.common import str_to_date, date_to_str, Attribute
 from support.abstract.scraper import AbstractScraper, ScraperError, parse_size
 from util.encoding import ensure_str
 from util.htmldocument import HtmlDocument
@@ -20,7 +20,7 @@ class Series(namedtuple('Series', ['id', 'title', 'original_title', 'image', 'ic
     pass
 
 
-class Episode(namedtuple('Episode', ['series_id', 'series_title', 'season_number', 'episode_number', 'episode_title',
+class Episode(namedtuple('Episode', ['series_id', 'series_title', 'series_year', 'season_number', 'episode_number', 'episode_title',
                                      'original_title', 'release_date', 'icon', 'poster', 'image'])):
     def __eq__(self, other):
         return self.series_id == other.series_id and \
@@ -197,6 +197,8 @@ class LostFilmScraper(AbstractScraper):
         with Timer(logger=self.log, name='Parsing episodes of series with ID %d' % series_id):
             body = doc.find('div', {'class': 'mid'})
             series_title, original_title = parse_title(body.find('h1').first.text)
+            res = re.search('Год выхода: (.+)\r\n', body.text)
+            series_year = res.group(1) if res else None
             image = self.BASE_URL + body.find('img').attr('src')
             icon = image.replace('/posters/poster_', '/icons/cat_')
             episode_divs = body.find('div', {'class': 't_row.*?'})
@@ -211,7 +213,7 @@ class LostFilmScraper(AbstractScraper):
                 poster = img_url(series_id, season_number, episode_number)
                 if not series_poster:
                     series_poster = poster
-                episode = Episode(series_id, series_title, season_number, episode_number, episode_title,
+                episode = Episode(series_id, series_title, series_year, season_number, episode_number, episode_title,
                                   orig_title, release_date, icon, poster, image)
                 episodes.append(episode)
             self.log.info("Got %d episode(s) successfully" % (len(episodes)))
@@ -284,6 +286,7 @@ class LostFilmScraper(AbstractScraper):
             episode_titles, original_titles = zip(*[parse_title(t) for t in titles])
             release_dates = body.find('b').strings[1::3]
             release_dates = [str_to_date(d, '%d.%m.%Y %H:%M') for d in release_dates]
+            series_years = [date_to_str(d, '%Y') for d in release_dates]
 
             selected_page = body.find('span', {'class': 'd_pages_link_selected'}).text
             last_page = body.find('a', {'class': 'd_pages_link'}).last.text
@@ -294,7 +297,7 @@ class LostFilmScraper(AbstractScraper):
             series_ids, season_numbers, episode_numbers = zip(*[parse_onclick(s or "") for s in onclicks])
             posters = [img_url(i, y, z if int(z) >= 10 else z[1:]) for i, y, z in zip(series_ids, season_numbers, episode_numbers)]
             images = ['http://static.lostfilm.tv/Images/'+str(series_id)+'/Posters/poster.jpg' for series_id in series_ids]
-            data = zip(series_ids, series_titles, season_numbers,
+            data = zip(series_ids, series_titles, series_years, season_numbers,
                        episode_numbers, episode_titles, original_titles, release_dates, icons, posters, images)
             episodes = [Episode(*e) for e in data if e[0]]
             self.log.info("Got %d episode(s) successfully" % (len(episodes)))
