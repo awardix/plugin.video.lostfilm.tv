@@ -19,7 +19,7 @@
         <setting type="slider" id="temp-max-size" label="40113" default="5" range="1,1,25" option="int"/>
         <setting type="lsep" label="40117" />
         <setting type="bool" id="show-playing-progress" label="40118" default="true"/>
-        <setting type="enum" id="torrent-stream" label="40101" lvalues="40102|40103" default="1"/>
+        <setting type="enum" id="torrent-stream" label="40101" lvalues="40102|40103|40123" default="1"/>
         <setting type="number" id="t2h-listen-port" label="40104" visible="eq(-1,0)" default="6881" enable="eq(1,false)"/>
         <setting type="bool" id="t2h-use-random-port" label="40105" visible="eq(-2,0)"/>
         <setting type="slider" id="t2h-pre-buffer-mb" label="40111" visible="eq(-3,0)" default="15" range="5,5,50" option="int"/>

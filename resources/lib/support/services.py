@@ -78,6 +78,13 @@ def ts_stream():
 
 
 @singleton
+def elementum_stream():
+    from support.torrent.stream import ElementumStream
+
+    return ElementumStream()
+
+
+@singleton
 def torrent2http_engine():
     import torrent2http
     from support.common import temp_path
@@ -114,7 +121,7 @@ def torrent_stream():
     """
     :rtype : TorrentStream
     """
-    stream = plugin.get_setting('torrent-stream', choices=(torrent2http_stream, ts_stream))
+    stream = plugin.get_setting('torrent-stream', choices=(torrent2http_stream, ts_stream, elementum_stream))
     return stream()
 
 
