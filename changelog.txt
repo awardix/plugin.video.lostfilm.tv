@@ -1,3 +1,6 @@
+[B]Версия 1.0.3[/B]
++ Добавлена поддержка Elementum
+
 [B]Версия 1.0.2[/B]
 * Авторизация по E-Mail на www.lostfilm.tv вместо old.lostfilm.tv
 
