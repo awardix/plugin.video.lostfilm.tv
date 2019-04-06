@@ -203,8 +203,8 @@ class LostFilmScraper(AbstractScraper):
             series_title = original_title
             if year:
                 series_title += " (%s)" % year
-            image = self.BASE_URL + body.find('img').attr('src')
-            icon = image.replace('/posters/poster_', '/icons/cat_')
+            image = img_url(series_id)
+            icon = image.replace('/poster.jpg', '/image.jpg')
             episode_divs = body.find('div', {'class': 't_row.*?'})
             series_poster = None
             for ep in episode_divs:
@@ -245,8 +245,8 @@ class LostFilmScraper(AbstractScraper):
         with Timer(logger=self.log, name='Parsing series info with ID %d' % series_id):
             body = doc.find('div', {'class': 'mid'})
             series_title, original_title = parse_title(body.find('h1').first.text)
-            image = self.BASE_URL + body.find('img').attr('src')
-            icon = image.replace('/posters/poster_', '/icons/cat_')
+            image = img_url(series_id)
+            icon = image.replace('/poster.jpg', '/image.jpg')
             info = body.find('div').first.text.replace("\xa0", "")
 
             res = re.search('Страна: (.+)\r\n', info)
@@ -296,10 +296,10 @@ class LostFilmScraper(AbstractScraper):
             self.has_more = int(selected_page) < int(last_page)
             onclicks = body.find('a', {'href': 'javascript:{};'}).attrs('onClick')
 
-            icons = body.find('img', {'class': 'category_icon'}).attrs('src')
             series_ids, season_numbers, episode_numbers = zip(*[parse_onclick(s or "") for s in onclicks])
             posters = [img_url(i, y, z if int(z) >= 10 else z[1:]) for i, y, z in zip(series_ids, season_numbers, episode_numbers)]
-            images = ['http://static.lostfilm.tv/Images/'+str(series_id)+'/Posters/poster.jpg' for series_id in series_ids]
+            images = [img_url(series_id) for series_id in series_ids]
+            icons = [img_url(series_id).replace('/poster.jpg', '/image.jpg') for series_id in series_ids]
             data = zip(series_ids, series_titles, season_numbers,
                        episode_numbers, episode_titles, original_titles, release_dates, icons, posters, images)
             episodes = [Episode(*e) for e in data if e[0]]
@@ -313,6 +313,8 @@ class LostFilmScraper(AbstractScraper):
             's': season_number,
             'e': episode_number
         })
+        if 'log in first' in doc.text:
+            raise ScraperError(32003, "Authorization failed", check_settings=True)
         redirect = doc.find('a').attr('href')
         doc = self.fetch(redirect, forced_encoding='utf-8')
         links = []
@@ -344,8 +346,11 @@ def parse_onclick(s):
         return 0, 0, ""
 
 
-def img_url(series_id, season, episode):
-    if episode == 99 or episode == "99":
-        return 'http://static.lostfilm.tv/Images/{0}/Posters/shmoster_s{1}.jpg'.format(series_id, season)
+def img_url(series_id, season=None, episode=99):
+    if season:
+        if episode == 99 or episode == "99":
+            return 'http://static.lostfilm.tv/Images/{0}/Posters/shmoster_s{1}.jpg'.format(series_id, season)
+        else:
+            return 'http://static.lostfilm.tv/Images/{0}/Posters/e_{1}_{2}.jpg'.format(series_id, season, episode)
     else:
-        return 'http://static.lostfilm.tv/Images/{0}/Posters/e_{1}_{2}.jpg'.format(series_id, season, episode)
+        return 'http://static.lostfilm.tv/Images/{0}/Posters/poster.jpg'.format(series_id)
