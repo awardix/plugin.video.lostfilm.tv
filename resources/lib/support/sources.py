@@ -78,6 +78,8 @@ class Sources(object):
         :type scraper_settings: ScraperSettings
         """
         path = xbmc.translatePath(path)
+        if not os.path.exists(path):
+            os.mkdir(path)
         self.add('video', path, label)
         with closing(VideoDatabase()) as db:
             db.update_path(path, scraper_settings, scan_recursive, use_folder_names, no_update)
