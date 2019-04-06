@@ -20,7 +20,7 @@ class ScraperSettings(object):
 
     @property
     def settings_xml(self):
-        root = ET.Element('settings')
+        root = ET.Element('settings', version='2')
         for k, v in self.settings.iteritems():
             if isinstance(v, bool):
                 v = "true" if v else "false"
@@ -28,7 +28,7 @@ class ScraperSettings(object):
                 v = unicode(v)
             setting = ET.SubElement(root, 'setting')
             setting.set('id', k)
-            setting.set('value', v)
+            setting.text = v
         return ET.tostring(root, 'utf-8')
 
 
@@ -44,8 +44,8 @@ class TvDbScraperSettings(TvShowsScraperSettings):
     scraper_addon_id = "metadata.tvdb.com"
 
     # noinspection PyPep8Naming
-    def __init__(self, RatingS='TheTVDB', absolutenumber=False, dvdorder=False,
-                 fallback=True, fanart=True, language=None):
+    def __init__(self, RatingS='TheTVDB', absolutenumber=False, dvdorder=False, fallback=True, fanart=True, language=None,
+                                                            alsoimdb=False, usefallbacklanguage1=True, fallbacklanguage='en'):
         super(TvDbScraperSettings, self).__init__(RatingS=RatingS, absolutenumber=absolutenumber,
                                                   dvdorder=dvdorder, fallback=fallback, fanart=fanart,
                                                   language=language or self.default_language)
