@@ -52,8 +52,8 @@ class Episode(Media):
     @property
     def filename(self):
         episodes = self.episode_number if isinstance(self.episode_number, list) else [self.episode_number]
-        episodes_str = "".join('x%02d' % e for e in episodes)
-        return "%d%s %s" % (self.season_number, episodes_str, super(Episode, self).filename)
+        episodes_str = "".join('%02d' % e for e in episodes)
+        return "S%dE%s %s" % (self.season_number, episodes_str, super(Episode, self).filename)
 
 
 class StreamFile(object):

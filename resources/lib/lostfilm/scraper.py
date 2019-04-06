@@ -134,6 +134,7 @@ class LostFilmScraper(AbstractScraper):
                     self.session.cookies['hash'] = self.authorization_hash
                 elif res.get('need_captcha'):
                     self.log.debug('NEEEED CAPTCHA')
+                    raise ScraperError(32003, "Authorization failed. Capcha", check_settings=True)
                 else:
                     self.log.debug(res)
                     raise ScraperError(32003, "Authorization failed", check_settings=True)
@@ -197,6 +198,11 @@ class LostFilmScraper(AbstractScraper):
         with Timer(logger=self.log, name='Parsing episodes of series with ID %d' % series_id):
             body = doc.find('div', {'class': 'mid'})
             series_title, original_title = parse_title(body.find('h1').first.text)
+            res = re.search('Год выхода: (.+)\r\n', body.text)
+            year = res.group(1) if res else None
+            series_title = original_title
+            if year:
+                series_title += " (%s)" % year
             image = self.BASE_URL + body.find('img').attr('src')
             icon = image.replace('/posters/poster_', '/icons/cat_')
             episode_divs = body.find('div', {'class': 't_row.*?'})
