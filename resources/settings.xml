@@ -8,6 +8,7 @@
         <setting type="enum" id="use-proxy" label="40164" lvalues="40165|40166|40167" default="0" />
         <setting type="bool" id="show-original-title" label="40212" default="true"/>
         <setting type="bool" id="update-xbmc-library" label="40213" default="true"/>
+        <setting type="slider" id="update-library-time" label="40214" default="12" range="1,1,24" option="int"/>
         <setting type="text" id="library-path" visible="false" default="special://userdata/addon_data/plugin.video.lostfilm.tv/library/"/>
         <setting type="bool" id="first-start" visible="false"/>
         <setting type="bool" id="lostfilm-source-created" visible="false"/>

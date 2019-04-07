@@ -40,7 +40,8 @@ if __name__ == '__main__':
         update_on_demand = plugin.get_setting('update-library', bool)
         if not next_run:
             next_run = now
-            next_run += datetime.timedelta(hours=12)
+            hour = plugin.get_setting('update-library-time', int)
+            next_run += datetime.timedelta(hours=(hour or 12))
             plugin.log.info("Scheduling next library update at %s" % next_run)
         elif now > next_run and not xbmc.Player().isPlaying() or update_on_demand:
             updated = safe_update_library()
