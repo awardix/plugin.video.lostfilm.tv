@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.lostfilm.tv" name="LostFilm.TV" version="1.0.5" provider-name="Nemiroff, anteo">
+<addon id="plugin.video.lostfilm.tv" name="LostFilm.TV" version="1.0.6" provider-name="Nemiroff, anteo">
     <requires>
         <import addon="xbmc.python" version="2.19.0"/>
         <import addon="script.module.requests" version="2.7.0"/>
@@ -24,7 +24,9 @@
             <icon>icon.png</icon>
             <fanart>fanart.jpg</fanart>
         </assets>
-        <news>[B]Версия 1.0.5[/B]
+        <news>[B]Версия 1.0.6[/B]
+* Исправление запуска серии при выдаче полного сезона
+[B]Версия 1.0.5[/B]
 * Переезд на https для старого сайта. Возможны проблемы на старых версиях Коди
 * Обновлена иконка
 * Добавлена настройка частоты обновления базы
