@@ -48,7 +48,7 @@ def play_episode(series, season, episode):
         return
     torrent = get_torrent(link.url)
     library_new_episodes().remove_by(series, season, episode)
-    play_torrent(torrent)
+    play_torrent(torrent, episode)
 
 
 @plugin.route('/browse_series/<series_id>')

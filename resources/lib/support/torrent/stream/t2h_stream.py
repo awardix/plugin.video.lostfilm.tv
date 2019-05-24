@@ -112,6 +112,10 @@ class Torrent2HttpStream(TorrentStream):
         list_item = list_item or {}
         file_status = status = None
         subtitles = None
+        if len(torrent.files) < 2:
+            file_id = 0
+        else:
+            file_id -= 1
 
         try:
             with closing(self.engine):

@@ -72,7 +72,11 @@ class TorrServeStream(TorrentStream):
                 with closing(self.engine):
                     self.log.info("Starting TorrServe engine...")
                     self.engine.uri = torrent.url
-                    self.engine.start(file_id or 0)
+                    if len(torrent.files) < 2:
+                        file_id = 0
+                    else:
+                        file_id -= 1
+                    self.engine.start(file_id)
                     ready = False
 
                     if self.pre_buffer_bytes:
@@ -89,8 +93,8 @@ class TorrServeStream(TorrentStream):
                                         continue
                                     if not files:
                                         raise TorrServeStreamError(33050, "No playable files detected")
-                                    file_id = files[0].index
-                                    file_status = files[0]
+                                    file_id = files[file_id].index
+                                    file_status = files[file_id]
                                     self.log.info("Detected video file: %s", file_status)
                                     continue
                                 else:
