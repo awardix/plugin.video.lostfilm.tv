@@ -123,6 +123,9 @@ class Torrent:
     def is_magnet(self):
         return self.url.startswith("magnet:")
 
+    def is_url(self):
+        return self.url.startswith("http")
+
     def has_url(self):
         return self._url is not None
 
@@ -170,7 +173,7 @@ class Torrent:
     @property
     def data(self):
         if self._data is None:
-            if self.has_url():
+            if self.has_url() and self.is_url():
                 if self.is_magnet():
                     raise TorrentError(32013, "Can't get torrent data for magnet link (%s)", self.url)
                 try:

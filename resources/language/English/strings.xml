@@ -21,7 +21,7 @@
     <string id="32012">Can't authenticate in uTorrent, check login/password</string>
 
     <string id="32013">Can't get torrent data for magnet link</string>
-    <string id="32014">Can't fetch torrent data</string>
+    <string id="32014">Can't fetch torrent data (%s)</string>
     <string id="32015">Can't decode torrent data (invalid torrent link?)</string>
     <string id="32016">Torrent URL is unknown</string>
     <string id="32017">Torrent file name is unknown</string>
