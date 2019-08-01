@@ -6,8 +6,7 @@ import support.titleformat as tf
 from xbmcswift2 import xbmcgui, actions, xbmc, abort_requested
 from lostfilm.scraper import Episode, Series, Quality, LostFilmScraper
 from support.torrent import TorrentFile
-from support.common import lang, date_to_str, singleton, save_files, purge_temp_dir, LocalizedError, \
-    batch, toggle_watched_menu
+from support.common import lang, date_to_str, singleton, save_files, purge_temp_dir, LocalizedError, batch, toggle_watched_menu
 from support.plugin import plugin
 
 
@@ -29,9 +28,7 @@ def go_to_series_menu(s):
 def download_menu(e):
     from xbmcswift2 import actions
     if plugin.get_setting('torrent-client', int):
-        return [(lang(40308), actions.background(plugin.url_for('download', series=e.series_id,
-                                                                season=e.season_number,
-                                                                episode=e.episode_number)))]
+        return [(lang(40308), actions.background(plugin.url_for('download', series=e.series_id, season=e.season_number, episode=e.episode_number)))]
     else:
         return []
 
@@ -70,11 +67,9 @@ def episode_url(e, select_quality=None):
     :type e: Episode
     """
     if e.is_complete_season:
-        return plugin.url_for('browse_season', series=e.series_id, season=e.season_number,
-                              select_quality=select_quality)
+        return plugin.url_for('browse_season', series=e.series_id, season=e.season_number, select_quality=select_quality)
     else:
-        return plugin.url_for('play_episode', series=e.series_id, season=e.season_number,
-                              episode=e.episode_number, select_quality=select_quality)
+        return plugin.url_for('play_episode', series=e.series_id, season=e.season_number, episode=e.episode_number, select_quality=select_quality)
 
 
 def itemify_episodes(episodes, same_series=False):
@@ -113,8 +108,7 @@ def mark_series_watched_menu(series):
     """
     :type series: Series
     """
-    return [(lang(40312), actions.background(plugin.url_for('mark_series_watched',
-                                                            series_id=series.id)))]
+    return [(lang(40312), actions.background(plugin.url_for('mark_series_watched', series_id=series.id)))]
 
 
 def toggle_episode_watched_menu(episode):
@@ -188,8 +182,7 @@ def itemify_file(path, series, season, f):
     item.update({
         'label': f.path,
         'path': plugin.url_for('play_file', path=path, series=series.id, season=season, file_id=f.index),
-        'context_menu':
-            info_menu(series) + toggle_watched_menu(),
+        'context_menu': info_menu(series) + toggle_watched_menu(),
         'is_playable': True,
     })
     item['info'].update({
@@ -224,8 +217,7 @@ def itemify_series(s, highlight_library_items=True):
     item.update({
         'label': series_label(s, highlight_library_items),
         'path': series_url(s),
-        'context_menu':
-            info_menu(s) + library_menu(s) + mark_series_watched_menu(s),
+        'context_menu': info_menu(s) + library_menu(s) + mark_series_watched_menu(s),
         'is_playable': False,
     })
     item['info'].update({
@@ -280,14 +272,12 @@ def library_new_episodes():
 @singleton
 def get_scraper():
     from support.services import xrequests_session
-    anonymized_urls = plugin.get_storage().setdefault('anonymized_urls', [], ttl=24 * 60 * 7)
     return LostFilmScraper(login=plugin.get_setting('login', unicode),
                            password=plugin.get_setting('password', unicode),
                            cookie_jar=plugin.addon_data_path('cookies'),
                            xrequests_session=xrequests_session(),
                            max_workers=BATCH_SERIES_COUNT,
-                           series_cache=series_cache(),
-                           anonymized_urls=anonymized_urls)
+                           series_cache=series_cache())
 
 
 def play_torrent(torrent, file_id=None):

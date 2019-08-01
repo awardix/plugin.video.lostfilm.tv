@@ -125,31 +125,11 @@ def torrent_stream():
     return stream()
 
 
-def proxy_list():
-    from support.hideme import HideMeProxyList, Proxy, SortBy, Anonymity
-
-    storage = plugin.get_storage()
-    proxies = HideMeProxyList(types=[Proxy.HTTP], except_countries=['RU'], sort_by=SortBy.PING,
-                              anonymity=[Anonymity.LOW, Anonymity.AVG, Anonymity.HIGH])
-    return storage.setdefault('proxies', proxies, ttl=24 * 60 * 3)
-
-
 def xrequests_session():
     from requests.packages.urllib3.util import Retry
     from support.xrequests import Session
 
-    use_proxy = plugin.get_setting('use-proxy', int)
-
-    session = Session(max_retries=Retry(total=2, status_forcelist=[500, 502, 503, 504], backoff_factor=0.3),
-                      timeout=5, proxy_list=proxy_list() if use_proxy else None)
-
-    # noinspection PyUnusedLocal,PyShadowingNames
-    def always_use_proxy(request, response):
-        return True
-
-    if use_proxy == 2:
-        session.add_proxy_need_check(always_use_proxy)
-
+    session = Session(max_retries=Retry(total=2, status_forcelist=[500, 502, 503, 504], backoff_factor=0.3), timeout=5)
     return session
 
 

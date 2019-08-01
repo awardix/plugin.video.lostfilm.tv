@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import unicode_literals
-from support.abstract.proxylist import ProxyListException
 from support.common import LocalizedError, lowercase, lang
-from support.plugin import plugin
-from support.xrequests import NoValidProxiesFound, Session
+from support.xrequests import  Session
 from util.timer import Timer
 from requests import RequestException, Timeout
 
@@ -54,13 +52,8 @@ class AbstractScraper(object):
                 return response
         except Timeout as e:
             raise ScraperError(32000, "Timeout while fetching URL: %s (%%s)" % url, lang(30000), cause=e)
-        except NoValidProxiesFound as e:
-            raise ScraperError(32005, "Can't find anonymous proxy", cause=e)
         except RequestException as e:
             raise ScraperError(32001, "Can't fetch URL: %s (%%s)" % url, lang(30000), cause=e)
-        except ProxyListException as e:
-            plugin.set_setting('use-proxy', 0)
-            raise ScraperError(32004, "Can't load anonymous proxy list", cause=e)
 
 
 def parse_duration(duration):

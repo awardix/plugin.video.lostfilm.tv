@@ -75,8 +75,7 @@ class LostFilmScraper(AbstractScraper):
     LOGIN_URL = "http://www.lostfilm.tv/ajaxik.php"
     BLOCKED_MESSAGE = "Контент недоступен на территории Российской Федерации"
 
-    def __init__(self, login, password, cookie_jar=None, xrequests_session=None, series_cache=None, max_workers=10,
-                 anonymized_urls=None):
+    def __init__(self, login, password, cookie_jar=None, xrequests_session=None, series_cache=None, max_workers=10):
         super(LostFilmScraper, self).__init__(xrequests_session, cookie_jar)
         self.series_cache = series_cache if series_cache is not None else {}
         self.max_workers = max_workers
@@ -84,31 +83,8 @@ class LostFilmScraper(AbstractScraper):
         self.login = login
         self.password = password
         self.has_more = None
-        self.anonymized_urls = anonymized_urls if anonymized_urls is not None else []
         self.session.headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.116 Safari/537.36'
         self.session.headers['Origin'] = 'http://www.lostfilm.tv'
-        self.session.add_proxy_need_check(self._check_content_is_blocked)
-        self.session.add_proxy_validator(self._validate_proxy)
-
-    # noinspection PyUnusedLocal
-    def _validate_proxy(self, proxy, request, response):
-        if response.status_code != 200 and response.status_code != 302:
-            return "Returned status %d" % response.status_code
-        if 'browse.php' in request.url or 'serials.php' in request.url:
-            if 'id="MainDiv"' not in response.text:
-                return "Response doesn't match original"
-            elif self.BLOCKED_MESSAGE in response.text:
-                return "Returned blocked content"
-
-    def _check_content_is_blocked(self, request, response):
-        if request.url in self.anonymized_urls:
-            return True
-        elif response and self.BLOCKED_MESSAGE in response.text:
-            self.log.info("Content of %s blocked, trying to use anonymous proxy..." % request.url)
-            self.anonymized_urls.append(request.url)
-            return True
-        else:
-            return False
 
     def fetch(self, url, params=None, data=None, forced_encoding=None, **request_params):
         self.response = super(LostFilmScraper, self).fetch(url, params, data, **request_params)
@@ -169,8 +145,7 @@ class LostFilmScraper(AbstractScraper):
         not_cached_ids = [_id for _id in series_ids if _id not in cached_details]
         results = dict((_id, self.series_cache[_id]) for _id in series_ids if _id in cached_details)
         if not_cached_ids:
-            with Timer(logger=self.log,
-                       name="Bulk fetching series with IDs " + ", ".join(str(i) for i in not_cached_ids)):
+            with Timer(logger=self.log, name="Bulk fetching series with IDs " + ", ".join(str(i) for i in not_cached_ids)):
                 with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
                     futures = [executor.submit(self.get_series_info, _id) for _id in not_cached_ids]
                     for future in as_completed(futures):
@@ -231,8 +206,7 @@ class LostFilmScraper(AbstractScraper):
         if not series_ids:
             return {}
         results = {}
-        with Timer(logger=self.log,
-                   name="Bulk fetching series episodes with IDs " + ", ".join(str(i) for i in series_ids)):
+        with Timer(logger=self.log, name="Bulk fetching series episodes with IDs " + ", ".join(str(i) for i in series_ids)):
             with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
                 futures = dict((executor.submit(self.get_series_episodes, _id), _id) for _id in series_ids)
                 for future in as_completed(futures):
