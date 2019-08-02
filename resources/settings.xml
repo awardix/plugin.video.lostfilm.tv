@@ -48,4 +48,13 @@
         <setting type="text" id="transmission-login" label="40005" visible="eq(-10,2)"/>
         <setting type="text" id="transmission-password" option="hidden" label="40006" visible="eq(-11,2)"/>
     </category>
+    <category label="Синхронизация">
+        <setting type="bool" id="check_only_favorites" label="Проверять обновление только избранных сериалов" default="false"/>
+        <setting type="bool" id="enable_sync" label="Включить синхронизацию" default="false"/>
+        <setting type="lsep" label="Действия" />
+        <setting type="bool" id="sync_add_favorite" label="Добавление в избранное" default="false" visible="eq(-2,true)"/>
+        <setting type="bool" id="sync_remove_favorite" label="Удаление из избранного" default="false" visible="eq(-3,true)"/>
+        <setting type="bool" id="sync_mark_watch" label="Отметка о просмотренном" default="false" visible="eq(-4,true)"/>
+        <setting type="bool" id="sync_favorites" label="Синхронизация избранного в медиатеку" default="false" visible="eq(-5,true)"/>
+    </category>
 </settings>

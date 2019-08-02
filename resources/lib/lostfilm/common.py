@@ -91,7 +91,7 @@ def episode_label(e, same_series=False):
     """
     label = ""
     if not e.is_complete_season:
-        label += tf.color("S%02dE%s " % (e.season_number, e.episode_number), 'blue')
+        label += tf.color("S%02dE%02d " % (e.season_number, int(e.episode_number)), 'blue')
     if e in library_new_episodes():
         label += tf.color("* ", NEW_LIBRARY_ITEM_COLOR)
     if e.series_id in library_items() and not same_series:
@@ -103,7 +103,11 @@ def episode_label(e, same_series=False):
     else:
         label += tf.color(e.episode_title, color)
     if e.original_title and plugin.get_setting('show-original-title', bool):
-        label += " / " + e.original_title
+        try:
+            title = e.original_title.decode("utf-8")
+        except UnicodeDecodeError:
+            title = 'weird encoding'
+        label += " / " + title
     return label
 
 
@@ -130,6 +134,12 @@ def itemify_episode(e, s, same_series=False):
     :type e: Episode
     :type s: Series
     """
+    scraper = get_scraper()
+    watched = scraper.api.get_mark(s.id)
+    val = "{0}{1:03}{2:03}".format(s.id, e.season_number, int(e.episode_number))
+    playcount = 0
+    if val in watched['data']:
+        playcount = 1
     item = itemify_common(s)
     item.update({
         'thumbnail': e.poster,
@@ -147,7 +157,9 @@ def itemify_episode(e, s, same_series=False):
         'premiered': date_to_str(e.release_date, '%Y-%m-%d'),
         'originaltitle': e.original_title,
         'date': date_to_str(e.release_date),
+        'playcount': playcount
     })
+
     return item
 
 
@@ -161,7 +173,7 @@ def itemify_common(s):
         'info': {
             'plot': s.plot or s.about,
             'rating': None,
-            'studio': None,
+            'country': s.country,
             'castandrole': s.actors,
             'writer': " / ".join(s.writers) if s.writers else None,
             'director': " / ".join(s.producers) if s.producers else None,

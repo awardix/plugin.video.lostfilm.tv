@@ -10,9 +10,10 @@ from collections import namedtuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from lostfilm.api import LostFilmApi
 from support.abstract.scraper import AbstractScraper, ScraperError, parse_size
-from support.common import str_to_date, Attribute
+from support.common import Attribute, str_to_date
 from util.htmldocument import HtmlDocument
 from util.timer import Timer
+from support.plugin import plugin
 
 
 class Series(namedtuple('Series', ['id', 'title', 'original_title', 'image', 'icon', 'poster', 'country', 'year',
@@ -41,7 +42,7 @@ class Episode(namedtuple('Episode', ['series_id', 'series_title', 'season_number
 
     @property
     def is_complete_season(self):
-        return self.episode_number == "99"
+        return self.episode_number == "999"
 
     @property
     def is_multi_episode(self):
@@ -73,7 +74,7 @@ TorrentLink = namedtuple('TorrentLink', ['quality', 'url', 'size'])
 
 class LostFilmScraper(AbstractScraper):
     BASE_URL = "https://old.lostfilm.tv"
-    API_URL = "http://www.lostfilm.tv/ajaxik.php"
+    NEW_BASE_URL = "http://www.lostfilm.tv"
     BLOCKED_MESSAGE = "Контент недоступен на территории Российской Федерации"
 
     def __init__(self, login, password, cookie_jar=None, xrequests_session=None, series_cache=None, shows_ids_cache=None, max_workers=10):
@@ -86,8 +87,7 @@ class LostFilmScraper(AbstractScraper):
         self.login = login
         self.password = password
         self.has_more = None
-        self.session.headers[
-            'User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.116 Safari/537.36'
+        self.session.headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.116 Safari/537.36'
         self.session.headers['Origin'] = 'http://www.lostfilm.tv'
 
     def fetch(self, url, params=None, data=None, forced_encoding=None, **request_params):
@@ -110,9 +110,9 @@ class LostFilmScraper(AbstractScraper):
                 if res['result'] == 'ok' and res.get('success'):
                     self.session.cookies['hash'] = self.authorization_hash
                 elif res.get('need_captcha'):
-                    self.log.debug('NEEEED CAPTCHA')
+                    self.log.debug('NEED CAPTCHA')
                     dialog = xbmcgui.Dialog()
-                    ok = dialog.ok('LostFilm', 'Требуется ввод капчи на сайте LostFilm.TV')
+                    dialog.ok('LostFilm', 'Требуется ввод капчи на сайте LostFilm.TV')
                     raise ScraperError(32003, "Authorization failed. Capcha", check_settings=False)
                 else:
                     self.log.debug(res)
@@ -138,6 +138,7 @@ class LostFilmScraper(AbstractScraper):
         if not self.authorized():
             self.authorize()
 
+    # new
     def get_series_bulk(self, series_ids):
         """
         :rtype : dict[int, Series]
@@ -148,13 +149,28 @@ class LostFilmScraper(AbstractScraper):
         not_cached_ids = [_id for _id in series_ids if _id not in cached_details]
         results = dict((_id, self.series_cache[_id]) for _id in series_ids if _id in cached_details)
         if not_cached_ids:
-            with Timer(logger=self.log,
-                       name="Bulk fetching series with IDs " + ", ".join(str(i) for i in not_cached_ids)):
+            with Timer(logger=self.log, name="Bulk fetching series with IDs " + ", ".join(str(i) for i in not_cached_ids)):
                 with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-                    futures = [executor.submit(self.get_series_info, _id) for _id in not_cached_ids]
+                    futures = [executor.submit(self.get_series_info, int(_id), self.shows_ids_dict[int(_id)]) for _id in not_cached_ids]
                     for future in as_completed(futures):
                         result = future.result()
                         self.series_cache[result.id] = results[result.id] = result
+        return results
+
+    # new
+    def get_series_episodes_bulk(self, series_ids):
+        """
+        :rtype : dict[int, list[Episode]]
+        """
+        if not series_ids:
+            return {}
+        results = {}
+        with Timer(logger=self.log, name="Bulk fetching series episodes with IDs " + ", ".join(str(i) for i in series_ids)):
+            with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
+                futures = dict((executor.submit(self.get_series_episodes, int(_id), self.shows_ids_dict[int(_id)]), _id) for _id in series_ids)
+                for future in as_completed(futures):
+                    _id = futures[future]
+                    results[_id] = future.result()
         return results
 
     def get_series_cached(self, series_id):
@@ -167,119 +183,119 @@ class LostFilmScraper(AbstractScraper):
     # new
     def check_for_new_series(self):
         resp = self.api.search_serial(0, 3, 1)
-        ids_incr = [i['id'] for i in resp]
+        ids_incr = [int(i['id']) for i in resp]
         if not (set(ids_incr).intersection(self.get_all_series_ids()) == set(ids_incr)):
             skip = 0
-            condition = True
-            while condition:
+            while True:
                 r = self.api.search_serial(skip, 2, 0)
                 if r:
                     for i in r:
-                        self.shows_ids_dict[i['id']] = i['alias']
+                        self.shows_ids_dict[int(i['id'])] = i['alias']
                     skip += 10
                 else:
-                    condition = False
+                    break
 
     # new
     def get_favorite_series(self):
         self.ensure_authorized()
         skip = 0
-        condition = True
         ids = []
-        while condition:
+        while True:
             r = self.api.search_serial(skip, 2, 99)
             if r:
                 ids_incr = [int(i['id']) for i in r]
                 ids.extend(ids_incr)
                 skip += 10
             else:
-                condition = False
+                break
         return ids
 
-    def _get_series_doc(self, series_id):
-        res = self.fetch(self.BASE_URL + "/browse.php", {'cat': series_id})
-        return res
+    # new
+    def _get_new_episodes_doc(self, page, favorite=False):
+        if favorite:
+            page = str(page) + "/type_99"
+        return self.fetch(self.NEW_BASE_URL + "/new/page_%s" % page)
 
-    def get_series_episodes(self, series_id):
-        doc = self._get_series_doc(series_id)
-        episodes = []
-        with Timer(logger=self.log, name='Parsing episodes of series with ID %d' % series_id):
-            body = doc.find('div', {'class': 'mid'})
-            series_title, original_title = parse_title(body.find('h1').first.text)
-            res = re.search('Год выхода: (.+)\r\n', body.text)
-            year = res.group(1) if res else None
-            series_title = original_title
-            if year:
-                series_title += " (%s)" % year
-            image = img_url(series_id)
-            icon = image.replace('/poster.jpg', '/image.jpg')
-            episode_divs = body.find('div', {'class': 't_row.*?'})
-            series_poster = None
-            for ep in episode_divs:
-                title_td = ep.find('td', {'class': 't_episode_title'})
-                episode_title, orig_title = parse_title(title_td.text)
-                onclick = title_td.attr('onClick')
-                release_date = ep.find('span', {'class': 'micro'}).find('span')[0].text
-                release_date = str_to_date(release_date, '%d.%m.%Y') if release_date else None
-                _, season_number, episode_number = parse_onclick(onclick)
-                poster = img_url(series_id, season_number, episode_number)
-                if not series_poster:
-                    series_poster = poster
-                episode = Episode(series_id, series_title, season_number, episode_number, episode_title,
-                                  orig_title, release_date, icon, poster, image)
-                episodes.append(episode)
+    # new
+    def browse_episodes(self, skip=0):
+        self.ensure_authorized()
+        self.check_for_new_series()
+        page = (skip or 0) / 10 + 1
+        only_favorites = plugin.get_setting('check_only_favorites', bool)
+        doc = self._get_new_episodes_doc(page, only_favorites)
+        with Timer(logger=self.log, name="Parsing episodes list"):
+            body = doc.find('div', {'class': 'content history'})
+            series_titles = body.find('div', {'class': 'name-ru'}).strings
+            episode_titles = body.find('div', {'class': 'alpha'}).strings[::2]
+            original_episode_titles = body.find('div', {'class': 'beta'}).strings[::2]
+            release_dates = body.find('div', {'class': 'alpha'}).strings[1::2]
+            release_dates = [str_to_date(r_d.split(' ')[-1], '%d.%m.%Y') for r_d in release_dates]
+            paging = doc.find('div', {'class': 'pagging-pane'})
+            selected_page = paging.find('a', {'class': 'item active'}).text
+            last_page = paging.find('a', {'class': 'item'}).last.text
+            self.has_more = int(selected_page) < int(last_page)
+            data_codes = body.find('div', {'class': 'haveseen-btn.*?'}).attrs('data-code')
+            series_ids, season_numbers, episode_numbers = zip(*[parse_data_code(s or "") for s in data_codes])
+            posters = [img_url(i, y, z) for i, y, z in zip(series_ids, season_numbers, episode_numbers)]
+            images = [img_url(series_id) for series_id in series_ids]
+            icons = [img_url(series_id).replace('/poster.jpg', '/image.jpg') for series_id in series_ids]
+            data = zip(series_ids, series_titles, season_numbers, episode_numbers, episode_titles, original_episode_titles, release_dates, icons, posters, images)
+            episodes = [Episode(*e) for e in data if e[0]]
             self.log.info("Got %d episode(s) successfully" % (len(episodes)))
             self.log.debug(repr(episodes).decode("unicode-escape"))
         return episodes
 
-    def get_series_episodes_bulk(self, series_ids):
-        """
-        :rtype : dict[int, list[Episode]]
-        """
-        if not series_ids:
-            return {}
-        results = {}
-        with Timer(logger=self.log,
-                   name="Bulk fetching series episodes with IDs " + ", ".join(str(i) for i in series_ids)):
-            with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
-                futures = dict((executor.submit(self.get_series_episodes, _id), _id) for _id in series_ids)
-                for future in as_completed(futures):
-                    _id = futures[future]
-                    results[_id] = future.result()
-        return results
+    # new
+    def _get_series_doc(self, series_alias):
+        return self.fetch(self.NEW_BASE_URL + "/series/%s" % series_alias)
 
-    def get_series_info(self, series_id):
-        doc = self._get_series_doc(series_id)
-        with Timer(logger=self.log, name='Parsing series info with ID %s' % series_id):
-            body = doc.find('div', {'class': 'mid'})
-            series_title, original_title = parse_title(body.find('h1').first.text)
+    # new
+    def _get_episodes_doc(self, series_alias):
+        return self.fetch(self.NEW_BASE_URL + '/series/%s/seasons/' % series_alias)
+
+    # new
+    def get_series_info(self, series_id, series_alias):
+        doc = self._get_series_doc(series_alias)
+        with Timer(logger=self.log, name='Parsing series info with ID %s' % series_alias):
+            title = doc.find('h1', {'class': 'header'})
+            series_title = title.find('div', {'class': 'title-ru'}).text
+            original_title = title.find('div', {'class': 'title-en'}).text
             image = img_url(series_id)
-            icon = image.replace('/poster.jpg', '/image.jpg')
-            info = body.find('div').first.text.replace("\xa0", "")
+            icon = image.replace('poster.jpg', 'image.jpg')
+            details = doc.find('div', {'class': 'details-pane'})
+            details_left = details.find('div', {'class': 'left-box'}).text
+            details_right = details.find('div', {'class': 'right-box'}).text
+            res = re.search('Премьера:( .+)', details_left)
+            year = res.group(0).split()[-1] if res else None
+            res = re.search('Страна:([\t\r\n]+)(.+)', details_left)
+            country = res.group(0).split()[-1] if res else None
+            res = re.search('Жанр: (\r\n)+((.+)[, ]?\r\n)+', details_right)
+            genres = re.split('; |, |\*|\n', res.group(0)) if res else None
+            if genres is not None:
+                genres = [g.strip() for g in genres if (len(g) > 3 and ':' not in g)]
+            about_and_plot = doc.find('div', {'class': 'text-block description'}).text
+            about_and_plot = about_and_plot.split('Сюжет')
+            plot = ""
+            if len(about_and_plot) > 1:
+                plot = re.sub(r'\s+', ' ', about_and_plot[1])
+                plot = about_and_plot[1]
+            about = about_and_plot[0].strip(' \t\n\r')
+            actors = self.fetch_crew(series_alias, 1)
+            if actors is not None:
+                actors = [(actor.strip().split('\n')[2], actor.strip().split('\n')[-1])
+                          for actor in actors if len(actor.strip()) > 3]
+            producers = self.fetch_crew(series_alias, 3)
+            if producers is not None:
+                producers = [producer.strip().split('\n')[2] for producer in producers]
+            writers = self.fetch_crew(series_alias, 4)
+            if writers is not None:
+                writers = [writer.strip().split('\n')[2] for writer in writers]
+            counter = self._get_episodes_doc(series_alias)
+            body = counter.find('div', {'class': 'series-block'})
+            episodes_count = len(body.find('td', {'class': 'zeta'}))
+            seasons_count = len(body.find('div', {'class': 'movie-details-block'}))
+            poster = img_url(series_id, seasons_count)
 
-            res = re.search('Страна: (.+)\r\n', info)
-            country = res.group(1) if res else None
-            res = re.search('Год выхода: (.+)\r\n', info)
-            year = res.group(1) if res else None
-            res = re.search('Жанр: (.+)\r\n', info)
-            genres = res.group(1).split(', ') if res else None
-            res = re.search('Количество сезонов: (.+)\r\n', info)
-            seasons_count = int(res.group(1)) if res else 0
-            res = re.search('О сериале[^\r\n]+\s*(.+?)($|\r\n)', info, re.S | re.M)
-            about = res.group(1) if res else None
-            res = re.search('Актеры:\s*(.+?)($|\r\n)', info, re.S | re.M)
-            actors = [parse_title(t) for t in res.group(1).split(', ')] if res else None
-            res = re.search('Режиссеры:\s*(.+?)($|\r\n)', info, re.S | re.M)
-            producers = res.group(1).split(', ') if res else None
-            res = re.search('Сценаристы:\s*(.+?)($|\r\n)', info, re.S | re.M)
-            writers = res.group(1).split(', ') if res else None
-            res = re.search('Сюжет:\s*(.+?)($|\r\n)', info, re.S | re.M)
-            plot = res.group(1) if res else None
-
-            episodes_count = len(body.find('div', {'class': 't_row.*?'})) - \
-                             len(body.find('label', {'title': 'Сезон полностью'}))
-
-            poster = img_url(series_id, seasons_count, 99)
             series = Series(series_id, series_title, original_title, image, icon, poster, country, year,
                             genres, about, actors, producers, writers, plot, seasons_count, episodes_count)
 
@@ -288,35 +304,60 @@ class LostFilmScraper(AbstractScraper):
 
         return series
 
-    def browse_episodes(self, skip=0):
-        self.ensure_authorized()
-        self.check_for_new_series()
-        doc = self.fetch(self.BASE_URL + "/browse.php", {'o': skip})
-        with Timer(logger=self.log, name='Parsing episodes list'):
-            body = doc.find('div', {'class': 'content_body'})
-            series_titles = body.find('span', {'style': 'font-family:arial;.*?'}).strings
-            titles = body.find('span', {'class': 'torrent_title'}).strings
-            episode_titles, original_titles = zip(*[parse_title(t) for t in titles])
-            release_dates = body.find('b').strings[1::3]
-            release_dates = [str_to_date(d, '%d.%m.%Y %H:%M') for d in release_dates]
-
-            selected_page = body.find('span', {'class': 'd_pages_link_selected'}).text
-            last_page = body.find('a', {'class': 'd_pages_link'}).last.text
-            self.has_more = int(selected_page) < int(last_page)
-            onclicks = body.find('a', {'href': 'javascript:{};'}).attrs('onClick')
-
-            series_ids, season_numbers, episode_numbers = zip(*[parse_onclick(s or "") for s in onclicks])
-            posters = [img_url(i, y, z if int(z) >= 10 else z[1:]) for i, y, z in
-                       zip(series_ids, season_numbers, episode_numbers)]
-            images = [img_url(series_id) for series_id in series_ids]
-            icons = [img_url(series_id).replace('/poster.jpg', '/image.jpg') for series_id in series_ids]
-            data = zip(series_ids, series_titles, season_numbers,
-                       episode_numbers, episode_titles, original_titles, release_dates, icons, posters, images)
-            episodes = [Episode(*e) for e in data if e[0]]
+    # new
+    def get_series_episodes(self, series_id, series_alias=None):
+        if not series_alias:
+            series_alias = self.shows_ids_dict[int(series_id)]
+        doc = self._get_episodes_doc(series_alias)
+        episodes = []
+        with Timer(logger=self.log, name='Parsing episodes of series with ID %s' % series_alias):
+            title = doc.find('div', {'class': 'title-block'})
+            series_title = title.find('div', {'class': 'title-en'}).text
+            image = img_url(series_id)
+            icon = image.replace('/poster.jpg', '/image.jpg')
+            episodes_data = doc.find('div', {'class': 'series-block'})
+            seasons = episodes_data.find('div', {'class': 'serie-block'})
+            year = seasons.last.find('div', {'class': 'details'}).text
+            year = re.search('Год: (\d{4})', year)
+            year = year.group(1) if year else None
+            if year:
+                series_title += " (%s)" % year
+            for s in seasons:
+                episodes_table = s.find('table', {'class': 'movie-parts-list'})
+                if not episodes_table.attrs('id')[0]:
+                    self.log.warning("No ID for table. New season of {0}".format(series_title))
+                    continue
+                if episodes_table.attrs('id')[0][-6:] == u'999999':
+                    gamma_class = 'gamma additional'
+                else:
+                    gamma_class = 'gamma'
+                titles = episodes_table.find('td', {'class': gamma_class})
+                orig_titles = [str(t) for t in titles.find('span')]
+                episode_titles = [t.split('\n')[0] for t in titles.strings]
+                episode_dates = [str(d.split(':')[-1])[1:] for d in episodes_table.find('td', {'class': 'delta'}).strings]
+                onclick = episodes_table.find('div', {'class': 'haveseen-btn.*?'}).attrs('data-code')
+                for e in range(len(onclick)):
+                    data_code = onclick[e]
+                    if not data_code:
+                        continue
+                    _, season_number, episode_number = parse_data_code(onclick[e])
+                    episode_title = episode_titles[e]
+                    orig_title = orig_titles[e]
+                    poster = img_url(series_id, season_number, episode_number)
+                    release_date = str_to_date(episode_dates[e], "%d.%m.%Y")
+                    episode = Episode(series_id, series_title, season_number, episode_number, episode_title, orig_title, release_date, icon, poster, image)
+                    episodes.append(episode)
             self.log.info("Got %d episode(s) successfully" % (len(episodes)))
             self.log.debug(repr(episodes).decode("unicode-escape"))
         return episodes
 
+    # new
+    def fetch_crew(self, series_alias, crew_type):
+        doc = self.fetch(self.BASE_URL + "/series/%s/cast/type_%s" % (series_alias, crew_type))
+        info = doc.find('div', {'class': 'text-block persons'}).text
+        return info.replace('\t', '').replace('\r', '').split('\n\n\n\n')[1:] or None
+
+    # new
     def get_torrent_links(self, series_id, season_number, episode_number):
         doc = self.fetch('http://www.lostfilm.tv/v_search.php', {
             'c': series_id,
@@ -340,25 +381,20 @@ class LostFilmScraper(AbstractScraper):
         return links
 
 
-def parse_title(t):
-    title, original_title = re.findall('^(.*?)\s*(?:\((.*)\)\.?)?$', t)[0]
-    return title, original_title
-
-
-def parse_onclick(s):
-    res = re.findall("ShowAllReleases\('([^']+)','([^']+)','([^']+)'\)", s)
+def parse_data_code(s):
+    res = s.split("-")
     if res:
-        series_id, season, episode = res[0]
-        series_id = int(series_id.lstrip("_"))
-        season = int(season.split('.')[0])
+        series_id, season, episode = res
+        series_id = int(series_id)
+        season = int(season)
         return series_id, season, episode
     else:
         return 0, 0, ""
 
 
-def img_url(series_id, season=None, episode=99):
+def img_url(series_id, season=None, episode=999):
     if season:
-        if episode == 99 or episode == "99":
+        if episode == 999 or episode == "999":
             return 'http://static.lostfilm.tv/Images/{0}/Posters/shmoster_s{1}.jpg'.format(series_id, season)
         else:
             return 'http://static.lostfilm.tv/Images/{0}/Posters/e_{1}_{2}.jpg'.format(series_id, season, episode)

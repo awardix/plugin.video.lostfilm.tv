@@ -17,7 +17,7 @@ def browse_season(series, season):
     plugin.set_content('episodes')
     select_quality = plugin.request.arg('select_quality')
     series = get_scraper().get_series_cached(series)
-    link = select_torrent_link(series.id, season, "99", select_quality)
+    link = select_torrent_link(series.id, season, "999", select_quality)
     if not link:
         return []
     torrent = get_torrent(link.url)
@@ -50,7 +50,7 @@ def play_episode(series, season, episode):
     library_new_episodes().remove_by(series, season, episode)
     play_torrent(torrent, episode)
     scraper = get_scraper()
-    scraper.api.mark_watched(series, season, episode, mode='on')
+    scraper.api.mark_watched(series, season, episode, force_mode='on')
 
 
 @plugin.route('/browse_series/<series_id>')

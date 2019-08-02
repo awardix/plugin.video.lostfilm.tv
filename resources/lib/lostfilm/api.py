@@ -69,16 +69,20 @@ class LostFilmApi(AbstractScraper):
         resp = self.fetch(self.API_URL, data=params)
         return resp
 
-    def mark_watched(self, series_id, season, episode, mode='on'):
+    def mark_watched(self, series_id, season, episode, mode='on', force_mode=None):
         if episode == 999 or episode == '999':
             types = 'markseason'
         else:
             types = 'markepisode'
         val = "{0}{1:03}{2:03}".format(series_id, season, episode)
         session = self._get_session()
-        watched = self.get_mark(series_id)
-        if val in watched['data']:
-            mode = 'off'
+        if force_mode:
+            mode = force_mode
+        else:
+            watched = self.get_mark(series_id)
+            if val in watched['data']:
+                mode = 'off'
+
         params = {
             'session': session,
             'act': 'serial',
