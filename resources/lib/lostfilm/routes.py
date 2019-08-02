@@ -49,8 +49,9 @@ def play_episode(series, season, episode):
     torrent = get_torrent(link.url)
     library_new_episodes().remove_by(series, season, episode)
     play_torrent(torrent, episode)
-    scraper = get_scraper()
-    scraper.api.mark_watched(series, season, episode, force_mode='on')
+    if plugin.get_setting('sync_mark_watch', bool):
+        scraper = get_scraper()
+        scraper.api.mark_watched(series, season, episode, force_mode='on')
 
 
 @plugin.route('/browse_series/<series_id>')
@@ -113,7 +114,8 @@ def add_to_library(series_id):
     scraper = get_scraper()
     if series_id not in items:
         items.append(series_id)
-        scraper.api.favorite(series_id)
+        if plugin.get_setting('sync_add_favorite', bool):
+            scraper.api.favorite(series_id)
     plugin.set_setting('update-library', True)
 
 
@@ -123,7 +125,8 @@ def remove_from_library(series_id):
     scraper = get_scraper()
     if series_id in items:
         items.remove(series_id)
-        scraper.api.favorite(series_id)
+        if plugin.get_setting('sync_remove_favorite', bool):
+            scraper.api.favorite(series_id)
     library_new_episodes().remove_by(series_id=series_id)
     plugin.set_setting('update-library', True)
 
@@ -192,8 +195,9 @@ def update_library_on_demand():
 @plugin.route('/toggle_episode_watched/<series_id>/<season>/<episode>')
 def toggle_episode_watched(series_id, season, episode):
     xbmc.executebuiltin(actions.toggle_watched())
-    scraper = get_scraper()
-    scraper.api.mark_watched(series_id, season, episode, mode='on')
+    if plugin.get_setting('sync_mark_watch', bool):
+        scraper = get_scraper()
+        scraper.api.mark_watched(series_id, season, episode, mode='on')
     if series_id in library_items():
         library_new_episodes().remove_by(series_id, season, episode)
 

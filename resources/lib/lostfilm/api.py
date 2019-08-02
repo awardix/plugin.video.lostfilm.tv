@@ -3,6 +3,7 @@ import json
 import re
 
 from support.abstract.scraper import AbstractScraper
+from support.plugin import plugin
 
 
 class LostFilmApi(AbstractScraper):
@@ -70,41 +71,40 @@ class LostFilmApi(AbstractScraper):
         return resp
 
     def mark_watched(self, series_id, season, episode, mode='on', force_mode=None):
-        if episode == 999 or episode == '999':
-            types = 'markseason'
-        else:
-            types = 'markepisode'
-        val = "{0}{1:03}{2:03}".format(series_id, season, episode)
-        session = self._get_session()
-        if force_mode:
-            mode = force_mode
-        else:
-            watched = self.get_mark(series_id)
-            if val in watched['data']:
-                mode = 'off'
+        if plugin.get_setting('enable_sync', bool):
+            if episode == 999 or episode == '999':
+                types = 'markseason'
+            else:
+                types = 'markepisode'
+            val = "{0}{1:03}{2:03}".format(series_id, season, episode)
+            session = self._get_session()
+            if force_mode:
+                mode = force_mode
+            else:
+                watched = self.get_mark(series_id)
+                if val in watched['data']:
+                    mode = 'off'
 
-        params = {
-            'session': session,
-            'act': 'serial',
-            'type': types,
-            'val': val,
-            'auto': 0,
-            'mode': mode
-        }
-        self.log.error(repr(params))
-        resp = self.fetch(self.API_URL, data=params)
-        return resp
+            params = {
+                'session': session,
+                'act': 'serial',
+                'type': types,
+                'val': val,
+                'auto': 0,
+                'mode': mode
+            }
+            self.fetch(self.API_URL, data=params)
 
     def favorite(self, series_id):
-        session = self._get_session()
-        params = {
-            'session': session,
-            'act': 'serial',
-            'type': 'follow',
-            'id': series_id
-        }
-        resp = self.fetch(self.API_URL, data=params)
-        return resp
+        if plugin.get_setting('enable_sync', bool):
+            session = self._get_session()
+            params = {
+                'session': session,
+                'act': 'serial',
+                'type': 'follow',
+                'id': series_id
+            }
+            self.fetch(self.API_URL, data=params)
 
     def get_mark(self, series_id):
         params ={
