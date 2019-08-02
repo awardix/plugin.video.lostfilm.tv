@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import unicode_literals
-from collections import namedtuple
+
 import hashlib
 import re
-import json
+import xbmcgui
+from collections import namedtuple
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from support.common import str_to_date, Attribute
+from lostfilm.api import LostFilmApi
 from support.abstract.scraper import AbstractScraper, ScraperError, parse_size
-from util.encoding import ensure_str
+from support.common import str_to_date, Attribute
 from util.htmldocument import HtmlDocument
 from util.timer import Timer
 
@@ -24,8 +25,8 @@ class Episode(namedtuple('Episode', ['series_id', 'series_title', 'season_number
                                      'original_title', 'release_date', 'icon', 'poster', 'image'])):
     def __eq__(self, other):
         return self.series_id == other.series_id and \
-            self.season_number == other.season_number and \
-            self.episode_number == other.episode_number
+               self.season_number == other.season_number and \
+               self.episode_number == other.episode_number
 
     def __ne__(self, other):
         return not self == other
@@ -72,18 +73,21 @@ TorrentLink = namedtuple('TorrentLink', ['quality', 'url', 'size'])
 
 class LostFilmScraper(AbstractScraper):
     BASE_URL = "https://old.lostfilm.tv"
-    LOGIN_URL = "http://www.lostfilm.tv/ajaxik.php"
+    API_URL = "http://www.lostfilm.tv/ajaxik.php"
     BLOCKED_MESSAGE = "Контент недоступен на территории Российской Федерации"
 
-    def __init__(self, login, password, cookie_jar=None, xrequests_session=None, series_cache=None, max_workers=10):
+    def __init__(self, login, password, cookie_jar=None, xrequests_session=None, series_cache=None, shows_ids_cache=None, max_workers=10):
         super(LostFilmScraper, self).__init__(xrequests_session, cookie_jar)
+        self.api = LostFilmApi(cookie_jar, xrequests_session)
+        self.shows_ids_dict = shows_ids_cache if shows_ids_cache is not None else {}
         self.series_cache = series_cache if series_cache is not None else {}
         self.max_workers = max_workers
         self.response = None
         self.login = login
         self.password = password
         self.has_more = None
-        self.session.headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.116 Safari/537.36'
+        self.session.headers[
+            'User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.116 Safari/537.36'
         self.session.headers['Origin'] = 'http://www.lostfilm.tv'
 
     def fetch(self, url, params=None, data=None, forced_encoding=None, **request_params):
@@ -101,16 +105,15 @@ class LostFilmScraper(AbstractScraper):
             if '@' not in self.login:
                 raise ScraperError(32019, "E-Mail %s not contain @" % self.login, self.login, check_settings=True)
             if not self.authorized():
-                doc = self.fetch(self.LOGIN_URL, data={'act': 'users', 'type': 'login',
-                                                       'mail': self.login.replace('@', '%40'),
-                                                       'pass': self.password, 'rem': '1'})
-                res = json.loads(str(doc))
-
-                if res.get('success'):
+                res = self.api.auth(mail=self.login, password=self.password)
+                self.log.error(repr(res))
+                if res['result'] == 'ok' and res.get('success'):
                     self.session.cookies['hash'] = self.authorization_hash
                 elif res.get('need_captcha'):
                     self.log.debug('NEEEED CAPTCHA')
-                    raise ScraperError(32003, "Authorization failed. Capcha", check_settings=True)
+                    dialog = xbmcgui.Dialog()
+                    ok = dialog.ok('LostFilm', 'Требуется ввод капчи на сайте LostFilm.TV')
+                    raise ScraperError(32003, "Authorization failed. Capcha", check_settings=False)
                 else:
                     self.log.debug(res)
                     raise ScraperError(32003, "Authorization failed", check_settings=True)
@@ -145,7 +148,8 @@ class LostFilmScraper(AbstractScraper):
         not_cached_ids = [_id for _id in series_ids if _id not in cached_details]
         results = dict((_id, self.series_cache[_id]) for _id in series_ids if _id in cached_details)
         if not_cached_ids:
-            with Timer(logger=self.log, name="Bulk fetching series with IDs " + ", ".join(str(i) for i in not_cached_ids)):
+            with Timer(logger=self.log,
+                       name="Bulk fetching series with IDs " + ", ".join(str(i) for i in not_cached_ids)):
                 with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
                     futures = [executor.submit(self.get_series_info, _id) for _id in not_cached_ids]
                     for future in as_completed(futures):
@@ -156,15 +160,44 @@ class LostFilmScraper(AbstractScraper):
     def get_series_cached(self, series_id):
         return self.get_series_bulk([series_id])[series_id]
 
+    # new
     def get_all_series_ids(self):
-        doc = self.fetch(self.BASE_URL + "/serials.php")
-        mid = doc.find('div', {'class': 'mid'})
-        links = mid.find('a', {'href': '/browse\.php\?cat=.+?', 'class': 'bb_a'}).attrs('href')
-        ids = [int(l[16:].lstrip("_")) for l in links]
+        return self.shows_ids_dict.keys()
+
+    # new
+    def check_for_new_series(self):
+        resp = self.api.search_serial(0, 3, 1)
+        ids_incr = [i['id'] for i in resp]
+        if not (set(ids_incr).intersection(self.get_all_series_ids()) == set(ids_incr)):
+            skip = 0
+            condition = True
+            while condition:
+                r = self.api.search_serial(skip, 2, 0)
+                if r:
+                    for i in r:
+                        self.shows_ids_dict[i['id']] = i['alias']
+                    skip += 10
+                else:
+                    condition = False
+
+    # new
+    def get_favorite_series(self):
+        self.ensure_authorized()
+        skip = 0
+        condition = True
+        ids = []
+        while condition:
+            r = self.api.search_serial(skip, 2, 99)
+            if r:
+                ids_incr = [int(i['id']) for i in r]
+                ids.extend(ids_incr)
+                skip += 10
+            else:
+                condition = False
         return ids
 
     def _get_series_doc(self, series_id):
-        res =  self.fetch(self.BASE_URL + "/browse.php", {'cat': series_id})
+        res = self.fetch(self.BASE_URL + "/browse.php", {'cat': series_id})
         return res
 
     def get_series_episodes(self, series_id):
@@ -206,7 +239,8 @@ class LostFilmScraper(AbstractScraper):
         if not series_ids:
             return {}
         results = {}
-        with Timer(logger=self.log, name="Bulk fetching series episodes with IDs " + ", ".join(str(i) for i in series_ids)):
+        with Timer(logger=self.log,
+                   name="Bulk fetching series episodes with IDs " + ", ".join(str(i) for i in series_ids)):
             with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
                 futures = dict((executor.submit(self.get_series_episodes, _id), _id) for _id in series_ids)
                 for future in as_completed(futures):
@@ -216,7 +250,7 @@ class LostFilmScraper(AbstractScraper):
 
     def get_series_info(self, series_id):
         doc = self._get_series_doc(series_id)
-        with Timer(logger=self.log, name='Parsing series info with ID %d' % series_id):
+        with Timer(logger=self.log, name='Parsing series info with ID %s' % series_id):
             body = doc.find('div', {'class': 'mid'})
             series_title, original_title = parse_title(body.find('h1').first.text)
             image = img_url(series_id)
@@ -243,7 +277,7 @@ class LostFilmScraper(AbstractScraper):
             plot = res.group(1) if res else None
 
             episodes_count = len(body.find('div', {'class': 't_row.*?'})) - \
-                len(body.find('label', {'title': 'Сезон полностью'}))
+                             len(body.find('label', {'title': 'Сезон полностью'}))
 
             poster = img_url(series_id, seasons_count, 99)
             series = Series(series_id, series_title, original_title, image, icon, poster, country, year,
@@ -256,6 +290,7 @@ class LostFilmScraper(AbstractScraper):
 
     def browse_episodes(self, skip=0):
         self.ensure_authorized()
+        self.check_for_new_series()
         doc = self.fetch(self.BASE_URL + "/browse.php", {'o': skip})
         with Timer(logger=self.log, name='Parsing episodes list'):
             body = doc.find('div', {'class': 'content_body'})
@@ -271,7 +306,8 @@ class LostFilmScraper(AbstractScraper):
             onclicks = body.find('a', {'href': 'javascript:{};'}).attrs('onClick')
 
             series_ids, season_numbers, episode_numbers = zip(*[parse_onclick(s or "") for s in onclicks])
-            posters = [img_url(i, y, z if int(z) >= 10 else z[1:]) for i, y, z in zip(series_ids, season_numbers, episode_numbers)]
+            posters = [img_url(i, y, z if int(z) >= 10 else z[1:]) for i, y, z in
+                       zip(series_ids, season_numbers, episode_numbers)]
             images = [img_url(series_id) for series_id in series_ids]
             icons = [img_url(series_id).replace('/poster.jpg', '/image.jpg') for series_id in series_ids]
             data = zip(series_ids, series_titles, season_numbers,

@@ -64,6 +64,7 @@ def select_quality_menu(e):
 
 def episode_url(e, select_quality=None):
     """
+    :param select_quality:
     :type e: Episode
     """
     if e.is_complete_season:
@@ -74,6 +75,7 @@ def episode_url(e, select_quality=None):
 
 def itemify_episodes(episodes, same_series=False):
     """
+    :param same_series:
     :type episodes: list[Episode]
     """
     series_ids = list(set(e.series_id for e in episodes))
@@ -84,11 +86,12 @@ def itemify_episodes(episodes, same_series=False):
 
 def episode_label(e, same_series=False):
     """
+    :param same_series:
     :type e: Episode
     """
     label = ""
     if not e.is_complete_season:
-        label += tf.color("%02d.%s " % (e.season_number, e.episode_number), 'blue')
+        label += tf.color("S%02dE%s " % (e.season_number, e.episode_number), 'blue')
     if e in library_new_episodes():
         label += tf.color("* ", NEW_LIBRARY_ITEM_COLOR)
     if e.series_id in library_items() and not same_series:
@@ -123,6 +126,7 @@ def toggle_episode_watched_menu(episode):
 
 def itemify_episode(e, s, same_series=False):
     """
+    :param same_series:
     :type e: Episode
     :type s: Series
     """
@@ -174,6 +178,7 @@ def itemify_common(s):
 
 def itemify_file(path, series, season, f):
     """
+    :param path:
     :type series: Series
     :type season: string
     :type f: TorrentFile
@@ -194,13 +199,13 @@ def itemify_file(path, series, season, f):
 
 def series_label(s, highlight_library_items=True):
     """
+    :param highlight_library_items:
     :type s: Series
     """
-    if s.id in library_items() and highlight_library_items:
-        color = LIBRARY_ITEM_COLOR
-    else:
-        color = 'white'
-    label = tf.color(s.title, color)
+    label = tf.color(s.title, 'white')
+    if int(s.id) in library_items() and highlight_library_items:
+        label = tf.color(tf.bold(s.title), LIBRARY_ITEM_COLOR)
+
     if plugin.get_setting('show-original-title', bool):
         label += " / " + s.original_title
     new_episodes = library_new_episodes().get_by(series_id=s.id)
@@ -211,6 +216,7 @@ def series_label(s, highlight_library_items=True):
 
 def itemify_series(s, highlight_library_items=True):
     """
+    :param highlight_library_items:
     :type s: Series
     """
     item = itemify_common(s)
@@ -223,7 +229,7 @@ def itemify_series(s, highlight_library_items=True):
     item['info'].update({
         'title': s.title,
         'episode': s.episodes_count,
-        'original_title': s.original_title,
+        'originaltitle': s.original_title,
     })
     return item
 
@@ -258,6 +264,10 @@ def series_cache():
     return plugin.get_storage('series.db', 24 * 60 * 7, cached=False)
 
 
+def shows_ids():
+    return plugin.get_storage('shows_ids.db', 24 * 60 * 7, cached=False)
+
+
 def library_items():
     return plugin.get_storage().setdefault('library_items', [])
 
@@ -277,7 +287,8 @@ def get_scraper():
                            cookie_jar=plugin.addon_data_path('cookies'),
                            xrequests_session=xrequests_session(),
                            max_workers=BATCH_SERIES_COUNT,
-                           series_cache=series_cache())
+                           series_cache=series_cache(),
+                           shows_ids_cache=shows_ids())
 
 
 def play_torrent(torrent, file_id=None):

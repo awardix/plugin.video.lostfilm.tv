@@ -49,6 +49,8 @@ def play_episode(series, season, episode):
     torrent = get_torrent(link.url)
     library_new_episodes().remove_by(series, season, episode)
     play_torrent(torrent, episode)
+    scraper = get_scraper()
+    scraper.api.mark_watched(series, season, episode, mode='on')
 
 
 @plugin.route('/browse_series/<series_id>')
@@ -90,19 +92,38 @@ def browse_library():
     plugin.finish(sort_methods=['unsorted', 'label'])
 
 
+@plugin.route('/browse_favorites')
+def browse_favorites():
+    plugin.set_content('tvshows')
+    scraper = get_scraper()
+    library = scraper.get_favorite_series()
+    total = len(library)
+    for batch_ids in batch(library, BATCH_SERIES_COUNT):
+        if abort_requested():
+            break
+        series = scraper.get_series_bulk(batch_ids)
+        items = [itemify_series(series[i]) for i in batch_ids]
+        plugin.add_items(with_fanart(items), total)
+    plugin.finish(sort_methods=['unsorted', 'label'])
+
+
 @plugin.route('/add_to_library/<series_id>')
 def add_to_library(series_id):
     items = library_items()
+    scraper = get_scraper()
     if series_id not in items:
         items.append(series_id)
+        scraper.api.favorite(series_id)
     plugin.set_setting('update-library', True)
 
 
 @plugin.route('/remove_from_library/<series_id>')
 def remove_from_library(series_id):
     items = library_items()
+    scraper = get_scraper()
     if series_id in items:
         items.remove(series_id)
+        scraper.api.favorite(series_id)
     library_new_episodes().remove_by(series_id=series_id)
     plugin.set_setting('update-library', True)
 
@@ -124,6 +145,7 @@ def index():
         {'label': lang(40401), 'path': plugin.url_for('browse_all_series')},
         {'label': lang(40407) % new_str, 'path': plugin.url_for('browse_library'),
          'context_menu': update_library_menu()},
+        {'label': '<< Избранное >>', 'path': plugin.url_for('browse_favorites')},
     ]
     items = []
     if skip:
@@ -170,6 +192,8 @@ def update_library_on_demand():
 @plugin.route('/toggle_episode_watched/<series_id>/<season>/<episode>')
 def toggle_episode_watched(series_id, season, episode):
     xbmc.executebuiltin(actions.toggle_watched())
+    scraper = get_scraper()
+    scraper.api.mark_watched(series_id, season, episode, mode='on')
     if series_id in library_items():
         library_new_episodes().remove_by(series_id, season, episode)
 
