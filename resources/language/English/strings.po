@@ -592,3 +592,42 @@ msgctxt "#40410"
 msgid "Error occurred during updating library (see log)"
 msgstr ""
 
+msgctxt "#40411"
+msgid "<< My Favorites >>"
+msgstr ""
+
+msgctxt "#40412"
+msgid "Need enter captcha on www.lostfilm.tv"
+msgstr ""
+
+msgctxt "#40413"
+msgid "Sync"
+msgstr ""
+
+msgctxt "#40414"
+msgid "Check only favorites shows"
+msgstr ""
+
+msgctxt "#40415"
+msgid "Enable synchronization"
+msgstr ""
+
+msgctxt "#40416"
+msgid "Sync action"
+msgstr ""
+
+msgctxt "#40417"
+msgid "Add to favorites"
+msgstr ""
+
+msgctxt "#40418"
+msgid "Remove from favorites"
+msgstr ""
+
+msgctxt "#40419"
+msgid "Sync watched mark"
+msgstr ""
+
+msgctxt "#40420"
+msgid "Sync favorites to Kodi"
+msgstr ""

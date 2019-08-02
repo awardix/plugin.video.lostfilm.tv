@@ -148,7 +148,7 @@ def index():
         {'label': lang(40401), 'path': plugin.url_for('browse_all_series')},
         {'label': lang(40407) % new_str, 'path': plugin.url_for('browse_library'),
          'context_menu': update_library_menu()},
-        {'label': '<< Избранное >>', 'path': plugin.url_for('browse_favorites')},
+        {'label': lang(40411), 'path': plugin.url_for('browse_favorites')},
     ]
     items = []
     if skip:

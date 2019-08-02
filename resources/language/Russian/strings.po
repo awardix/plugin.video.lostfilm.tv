@@ -592,3 +592,42 @@ msgctxt "#40410"
 msgid "Error occurred during updating library (see log)"
 msgstr "Произошла ошибка во время обновления библиотеки (см. лог)"
 
+msgctxt "#40411"
+msgid "<< My Favorites >>"
+msgstr "<< Избранное >>"
+
+msgctxt "#40412"
+msgid "Need enter captcha on www.lostfilm.tv"
+msgstr "Требуется ввод капчи на сайте LostFilm.TV"
+
+msgctxt "#40413"
+msgid "Sync"
+msgstr "Синхронизация"
+
+msgctxt "#40414"
+msgid "Check only favorites shows"
+msgstr "Проверять обновление только избранных сериалов"
+
+msgctxt "#40415"
+msgid "Enable synchronization"
+msgstr "Включить синхронизацию"
+
+msgctxt "#40416"
+msgid "Sync action"
+msgstr "Синхронизация действий"
+
+msgctxt "#40417"
+msgid "Add to favorites"
+msgstr "Добавление в избранное"
+
+msgctxt "#40418"
+msgid "Remove from favorites"
+msgstr "Удаление из избранного"
+
+msgctxt "#40419"
+msgid "Sync watched mark"
+msgstr "Отметка о просмотренном"
+
+msgctxt "#40420"
+msgid "Sync favorites to Kodi"
+msgstr "Синхронизация избранного в медиатеку"

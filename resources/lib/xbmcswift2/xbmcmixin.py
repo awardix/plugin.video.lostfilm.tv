@@ -260,14 +260,14 @@ class XBMCMixin(object):
         return '"' + escaped + '"'
 
     @staticmethod
-    def update_library(library, path="", popup=True):
+    def update_library(library, path=""):
         if isinstance(path, unicode):
             path = path.encode('utf-8')
-        xbmc.executebuiltin('UpdateLibrary(%s)' % (library))
+        xbmc.executebuiltin('UpdateLibrary(%s, %s)' % (library, path))
 
     @staticmethod
-    def clean_library(library, popup=True):
-        xbmc.executebuiltin('CleanLibrary(%s,%s)' % (library, popup))
+    def clean_library(library):
+        xbmc.executebuiltin('CleanLibrary(%s)' % library)
 
     @staticmethod
     def is_scanning_library():

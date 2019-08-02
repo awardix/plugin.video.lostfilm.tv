@@ -10,7 +10,7 @@ from collections import namedtuple
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from lostfilm.api import LostFilmApi
 from support.abstract.scraper import AbstractScraper, ScraperError, parse_size
-from support.common import Attribute, str_to_date
+from support.common import Attribute, str_to_date, lang
 from util.htmldocument import HtmlDocument
 from util.timer import Timer
 from support.plugin import plugin
@@ -112,8 +112,8 @@ class LostFilmScraper(AbstractScraper):
                 elif res.get('need_captcha'):
                     self.log.debug('NEED CAPTCHA')
                     dialog = xbmcgui.Dialog()
-                    dialog.ok('LostFilm', 'Требуется ввод капчи на сайте LostFilm.TV')
-                    raise ScraperError(32003, "Authorization failed. Capcha", check_settings=False)
+                    dialog.ok(lang(30000), lang(40412))
+                    raise ScraperError(32003, "Authorization failed. Captcha", check_settings=False)
                 else:
                     self.log.debug(res)
                     raise ScraperError(32003, "Authorization failed", check_settings=True)
