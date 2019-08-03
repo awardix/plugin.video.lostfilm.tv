@@ -212,9 +212,11 @@ class LostFilmScraper(AbstractScraper):
 
     # new
     def _get_new_episodes_doc(self, page, favorite=False):
+        page = str(page)
+        type = "0"
         if favorite:
-            page = str(page) + "/type_99"
-        return self.fetch(self.NEW_BASE_URL + "/new/page_%s" % page)
+            type = "99"
+        return self.fetch(self.NEW_BASE_URL + "/new/page_%s/type_%s" % (page, type))
 
     # new
     def browse_episodes(self, skip=0):

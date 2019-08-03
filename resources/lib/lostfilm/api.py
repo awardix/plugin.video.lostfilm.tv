@@ -82,7 +82,7 @@ class LostFilmApi(AbstractScraper):
                 mode = force_mode
             else:
                 watched = self.get_mark(series_id)
-                if val in watched['data']:
+                if val in watched:
                     mode = 'off'
 
             params = {
@@ -107,10 +107,13 @@ class LostFilmApi(AbstractScraper):
             self.fetch(self.API_URL, data=params)
 
     def get_mark(self, series_id):
-        params ={
+        params = {
             'act': 'serial',
             'type': 'getmarks',
             'id': series_id
         }
         resp = self.fetch(self.API_URL, data=params)
-        return resp
+        if 'data' in resp:
+            return resp['data']
+        else:
+            return []

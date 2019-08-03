@@ -137,7 +137,7 @@ def itemify_episode(e, s, same_series=False):
     watched = scraper.api.get_mark(s.id)
     val = "{0}{1:03}{2:03}".format(s.id, e.season_number, int(e.episode_number))
     playcount = 0
-    if val in watched['data']:
+    if val in watched:
         playcount = 1
     item = itemify_common(s)
     item.update({

@@ -117,6 +117,7 @@ def add_to_library(series_id):
         if plugin.get_setting('sync_add_favorite', bool):
             scraper.api.favorite(series_id)
     plugin.set_setting('update-library', True)
+    xbmc.executebuiltin(actions.refresh())
 
 
 @plugin.route('/remove_from_library/<series_id>')
@@ -129,6 +130,7 @@ def remove_from_library(series_id):
             scraper.api.favorite(series_id)
     library_new_episodes().remove_by(series_id=series_id)
     plugin.set_setting('update-library', True)
+    xbmc.executebuiltin(actions.refresh())
 
 
 @plugin.route('/')
@@ -188,8 +190,8 @@ def create_source():
 @plugin.route('/update_library')
 def update_library_on_demand():
     plugin.set_setting('update-library', True)
-    # from lostfilm.common import update_library
-    # update_library()
+    from lostfilm.common import update_library
+    update_library()
 
 
 @plugin.route('/toggle_episode_watched/<series_id>/<season>/<episode>')

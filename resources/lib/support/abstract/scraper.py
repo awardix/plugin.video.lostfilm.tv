@@ -43,7 +43,7 @@ class AbstractScraper(object):
 
     def fetch(self, url, params=None, data=None, **request_params):
         try:
-            with Timer(logger=self.log, name='Fetching URL %s with params %r' % (url, params)):
+            with Timer(logger=self.log, log_level=logging.DEBUG, name='Fetching URL %s with params %r' % (url, params)):
                 response = self.session.request('post' if data else 'get',
                                                 url, params=params, data=data,
                                                 **request_params)
