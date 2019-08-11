@@ -104,8 +104,8 @@ def episode_label(e, same_series=False):
     if e.original_title and plugin.get_setting('show-original-title', bool):
         try:
             title = e.original_title.decode("utf-8")
-        except UnicodeDecodeError:
-            title = 'weird encoding'
+        except:
+            title = e.original_title
         label += " / " + title
     return label
 
