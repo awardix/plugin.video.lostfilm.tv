@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.lostfilm.tv" name="LostFilm.TV" version="1.1.2" provider-name="Nemiroff, anteo">
+<addon id="plugin.video.lostfilm.tv" name="LostFilm.TV" version="1.1.3" provider-name="Nemiroff, anteo">
     <requires>
         <import addon="xbmc.python" version="2.19.0"/>
         <import addon="script.module.requests" version="2.7.0"/>
@@ -24,7 +24,9 @@
             <icon>icon.png</icon>
             <fanart>fanart.jpg</fanart>
         </assets>
-        <news>[B]Версия 1.1.2[/B]
+        <news>[B]Версия 1.1.3[/B]
+* Исправление парсера под последние изменения верстки сайта
+[B]Версия 1.1.2[/B]
 * Ошибка с кодировкой в оригинальных названиях
 [B]Версия 1.1.1[/B]
 * Исправлена ошибка при запуске
