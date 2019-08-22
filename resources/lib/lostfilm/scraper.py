@@ -259,9 +259,9 @@ class LostFilmScraper(AbstractScraper):
     def get_series_info(self, series_id, series_alias):
         doc = self._get_series_doc(series_alias)
         with Timer(logger=self.log, name='Parsing series info with ID %s' % series_alias):
-            title = doc.find('h1', {'class': 'header'})
-            series_title = title.find('div', {'class': 'title-ru'}).text
-            original_title = title.find('div', {'class': 'title-en'}).text
+            title = doc.find('div', {'class': 'header'})
+            series_title = title.find('h1', {'class': 'title-ru'}).text
+            original_title = title.find('h2', {'class': 'title-en'}).text
             image = img_url(series_id)
             icon = image.replace('poster.jpg', 'image.jpg')
             details = doc.find('div', {'class': 'details-pane'})

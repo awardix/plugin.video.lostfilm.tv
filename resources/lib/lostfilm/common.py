@@ -274,6 +274,10 @@ def select_torrent_link(series, season, episode, force=False):
 def series_cache():
     return plugin.get_storage('series.db', 24 * 60 * 7, cached=False)
 
+def clear_series():
+    series_cache().clear()
+    plugin.set_setting('clear-cache', False)
+    return
 
 def shows_ids():
     return plugin.get_storage('shows_ids.db', 24 * 60 * 7, cached=False)

@@ -13,6 +13,7 @@
         <setting type="bool" id="lostfilm-source-created" visible="false"/>
         <setting type="action" label="40406" action="RunPlugin(plugin://plugin.video.lostfilm.tv/create_source)" option="close" visible="eq(-1,false)"/>
         <setting type="bool" id="update-library" visible="false"/>
+        <setting type="bool" id="clear-cache" visible="false" default="true"/>
     </category>
     <category label="40100">
         <setting type="folder" id="temp-path" label="40112" option="writeable" default="special://temp/torrent2http"/>
@@ -50,11 +51,11 @@
     </category>
     <category label="40413">
         <setting type="bool" id="check_only_favorites" label="40414" default="false"/>
-        <setting type="bool" id="enable_sync" label="40415" default="false"/>
+        <setting type="bool" id="enable_sync" label="40415" default="true"/>
         <setting type="lsep" label="40416" />
         <setting type="bool" id="sync_add_favorite" label="40417" default="false" visible="eq(-2,true)"/>
         <setting type="bool" id="sync_remove_favorite" label="40418" default="false" visible="eq(-3,true)"/>
-        <setting type="bool" id="sync_mark_watch" label="40419" default="false" visible="eq(-4,true)"/>
+        <setting type="bool" id="sync_mark_watch" label="40419" default="true" visible="eq(-4,true)"/>
         <setting type="bool" id="sync_favorites" label="40420" default="false" visible="eq(-5,true)"/>
     </category>
 </settings>

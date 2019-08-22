@@ -8,7 +8,7 @@ from xbmcswift2.common import abort_requested
 from support.plugin import plugin
 from lostfilm.common import select_torrent_link, get_scraper, itemify_episodes, itemify_file, play_torrent, \
     itemify_series, BATCH_SERIES_COUNT, BATCH_EPISODES_COUNT, library_items, update_library_menu, \
-    library_new_episodes, NEW_LIBRARY_ITEM_COLOR, check_last_episode, check_first_start
+    library_new_episodes, NEW_LIBRARY_ITEM_COLOR, check_last_episode, check_first_start, clear_series
 from support.torrent import Torrent
 
 
@@ -138,6 +138,9 @@ def index():
     plugin.set_content('episodes')
     skip = plugin.request.arg('skip')
     per_page = plugin.get_setting('per-page', int)
+    need_clear = plugin.get_setting('clear-cache', bool, default=False)
+    if(need_clear):
+        clear_series()
     scraper = get_scraper()
     episodes = scraper.browse_episodes(skip)
     if episodes and not skip:
