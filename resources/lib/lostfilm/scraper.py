@@ -73,8 +73,7 @@ TorrentLink = namedtuple('TorrentLink', ['quality', 'url', 'size'])
 
 
 class LostFilmScraper(AbstractScraper):
-    BASE_URL = "https://old.lostfilm.tv"
-    NEW_BASE_URL = "http://www.lostfilm.tv"
+    BASE_URL = "http://www.lostfilm.tv"
     BLOCKED_MESSAGE = "Контент недоступен на территории Российской Федерации"
 
     def __init__(self, login, password, cookie_jar=None, xrequests_session=None, series_cache=None, shows_ids_cache=None, max_workers=10):
@@ -216,7 +215,7 @@ class LostFilmScraper(AbstractScraper):
         type = "0"
         if favorite:
             type = "99"
-        return self.fetch(self.NEW_BASE_URL + "/new/page_%s/type_%s" % (page, type))
+        return self.fetch(self.BASE_URL + "/new/page_%s/type_%s" % (page, type))
 
     # new
     def browse_episodes(self, skip=0):
@@ -249,11 +248,11 @@ class LostFilmScraper(AbstractScraper):
 
     # new
     def _get_series_doc(self, series_alias):
-        return self.fetch(self.NEW_BASE_URL + "/series/%s" % series_alias)
+        return self.fetch(self.BASE_URL + "/series/%s" % series_alias)
 
     # new
     def _get_episodes_doc(self, series_alias):
-        return self.fetch(self.NEW_BASE_URL + '/series/%s/seasons/' % series_alias)
+        return self.fetch(self.BASE_URL + '/series/%s/seasons/' % series_alias)
 
     # new
     def get_series_info(self, series_id, series_alias):
@@ -313,8 +312,8 @@ class LostFilmScraper(AbstractScraper):
         doc = self._get_episodes_doc(series_alias)
         episodes = []
         with Timer(logger=self.log, name='Parsing episodes of series with ID %s' % series_alias):
-            title = doc.find('div', {'class': 'title-block'})
-            series_title = title.find('div', {'class': 'title-en'}).text
+            title = doc.find('div', {'class': 'header'})
+            series_title = title.find('h2', {'class': 'title-en'}).text
             image = img_url(series_id)
             icon = image.replace('/poster.jpg', '/image.jpg')
             episodes_data = doc.find('div', {'class': 'series-block'})
