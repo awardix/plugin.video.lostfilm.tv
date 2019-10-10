@@ -357,7 +357,8 @@ def update_library():
     series_ids = library_items()
     if plugin.get_setting('sync_favorites', bool) and plugin.get_setting('enable_sync', bool):
         fav_ids = scraper.get_favorite_series()
-        series_ids.extend(fav_ids)
+        #series_ids.extend(fav_ids)
+        series_ids = list(set(series_ids + fav_ids))
     total = len(series_ids)
     lib = get_library()
     processed = 0

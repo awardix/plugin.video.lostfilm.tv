@@ -121,7 +121,7 @@ class ListItem(object):
     def set_icon(self, icon):
         """Sets the listitem's icon image"""
         self._icon = icon
-        self._listitem.setIconImage(icon)
+        self._listitem.setArt({'icon': icon})
 
     icon = property(get_icon, set_icon)
 
@@ -132,7 +132,8 @@ class ListItem(object):
     def set_thumbnail(self, thumbnail):
         """Sets the listitem's thumbnail image"""
         self._thumbnail = thumbnail
-        self._listitem.setThumbnailImage(thumbnail)
+        #self._listitem.setThumbnailImage(thumbnail)
+        self._listitem.setArt({"thumb": thumbnail})
 
     thumbnail = property(get_thumbnail, set_thumbnail)
 
