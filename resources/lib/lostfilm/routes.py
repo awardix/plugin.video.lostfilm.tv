@@ -63,6 +63,38 @@ def browse_series(series_id):
     plugin.finish(items=with_fanart(items), cache_to_disc=False)
 
 
+@plugin.route('/browse')
+def browse():
+    header = [
+            {'label': lang(40401), 'path': plugin.url_for('browse_all_series')},
+            {'label': lang(40421), 'path': plugin.url_for('browse_new')},
+            {'label': lang(40411), 'path': plugin.url_for('browse_favorites')},
+            {'label': lang(40422), 'path': plugin.url_for('search')},
+    ]
+    plugin.add_items(with_fanart(header), len(header))
+    plugin.finish(sort_methods=['unsorted', 'label'])
+
+@plugin.route('/search')
+def search():
+    skbd = xbmc.Keyboard()
+    skbd.setHeading(lang(40423))
+    skbd.doModal()
+    if skbd.isConfirmed():
+        query = skbd.getText()
+    else:
+        return None
+    plugin.set_content('tvshows')
+    scraper = get_scraper()
+    library = scraper.search_serial(query)
+    total = len(library)
+    for batch_ids in batch(library, BATCH_SERIES_COUNT):
+        if abort_requested():
+            break
+        series = scraper.get_series_bulk(batch_ids)
+        items = [itemify_series(series[i]) for i in batch_ids]
+        plugin.add_items(with_fanart(items), total)
+    plugin.finish(sort_methods=['unsorted', 'label'])
+
 @plugin.route('/browse_all_series')
 def browse_all_series():
     plugin.set_content('tvshows')
@@ -76,7 +108,6 @@ def browse_all_series():
         items = [itemify_series(series[i]) for i in batch_ids]
         plugin.add_items(with_fanart(items), total)
     plugin.finish()
-
 
 @plugin.route('/browse_library')
 def browse_library():
@@ -92,6 +123,19 @@ def browse_library():
         plugin.add_items(with_fanart(items), total)
     plugin.finish(sort_methods=['unsorted', 'label'])
 
+@plugin.route('/browse_new')
+def browse_new():
+    plugin.set_content('tvshows')
+    scraper = get_scraper()
+    library = scraper.get_new_series()
+    total = len(library)
+    for batch_ids in batch(library, BATCH_SERIES_COUNT):
+        if abort_requested():
+            break
+        series = scraper.get_series_bulk(batch_ids)
+        items = [itemify_series(series[i]) for i in batch_ids]
+        plugin.add_items(with_fanart(items), total)
+    plugin.finish(sort_methods=['unsorted', 'label'])
 
 @plugin.route('/browse_favorites')
 def browse_favorites():
@@ -107,7 +151,6 @@ def browse_favorites():
         plugin.add_items(with_fanart(items), total)
     plugin.finish(sort_methods=['unsorted', 'label'])
 
-
 @plugin.route('/add_to_library/<series_id>')
 def add_to_library(series_id):
     items = library_items()
@@ -118,7 +161,6 @@ def add_to_library(series_id):
             scraper.api.favorite(series_id)
     plugin.set_setting('update-library', True)
     xbmc.executebuiltin(actions.refresh())
-
 
 @plugin.route('/remove_from_library/<series_id>')
 def remove_from_library(series_id):
@@ -131,7 +173,6 @@ def remove_from_library(series_id):
     library_new_episodes().remove_by(series_id=series_id)
     plugin.set_setting('update-library', True)
     xbmc.executebuiltin(actions.refresh())
-
 
 @plugin.route('/')
 def index():
@@ -150,9 +191,8 @@ def index():
     new_str = "(%s) " % tf.color(str(len(new_episodes)), NEW_LIBRARY_ITEM_COLOR) if new_episodes else ""
     total = len(episodes)
     header = [
-        {'label': lang(40401), 'path': plugin.url_for('browse_all_series')},
-        {'label': lang(40407) % new_str, 'path': plugin.url_for('browse_library'),
-         'context_menu': update_library_menu()},
+        {'label': lang(40401), 'path': plugin.url_for('browse')},
+        {'label': lang(40407) % new_str, 'path': plugin.url_for('browse_library'), 'context_menu': update_library_menu()},
         {'label': lang(40411), 'path': plugin.url_for('browse_favorites')},
     ]
     items = []
@@ -183,19 +223,16 @@ def index():
                   cache_to_disc=False,
                   update_listing=skip is not None)
 
-
 @plugin.route('/create_source')
 def create_source():
     from lostfilm.common import create_lostfilm_source
     create_lostfilm_source()
-
 
 @plugin.route('/update_library')
 def update_library_on_demand():
     plugin.set_setting('update-library', True)
     from lostfilm.common import update_library
     update_library()
-
 
 @plugin.route('/toggle_episode_watched/<series_id>/<season>/<episode>')
 def toggle_episode_watched(series_id, season, episode):
@@ -205,7 +242,6 @@ def toggle_episode_watched(series_id, season, episode):
         scraper.api.mark_watched(series_id, season, episode, mode='on')
     if series_id in library_items():
         library_new_episodes().remove_by(series_id, season, episode)
-
 
 @plugin.route('/mark_series_watched/<series_id>')
 def mark_series_watched(series_id):

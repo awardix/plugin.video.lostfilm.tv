@@ -210,6 +210,31 @@ class LostFilmScraper(AbstractScraper):
         return ids
 
     # new
+    def get_new_series(self):
+        self.ensure_authorized()
+        skip = 0
+        ids = []
+        while True:
+            r = self.api.search_serial(skip, 3, 1)
+            if r:
+                ids_incr = [int(i['id']) for i in r]
+                ids.extend(ids_incr)
+                skip += 10
+            else:
+                break
+        return ids
+
+    #new
+    def search_serial(self, query):
+        skip = 0
+        ids = []
+        r = self.api.search(query)
+        if r:
+            ids_incr = [int(i['id']) for i in r]
+            ids.extend(ids_incr)
+        return ids
+
+    # new
     def _get_new_episodes_doc(self, page, favorite=False):
         page = str(page)
         type = "0"

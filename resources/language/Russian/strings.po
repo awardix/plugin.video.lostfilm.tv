@@ -631,3 +631,16 @@ msgstr "Отметка о просмотренном"
 msgctxt "#40420"
 msgid "Sync favorites to Kodi"
 msgstr "Синхронизация избранного в медиатеку"
+
+msgctxt "#40421"
+msgid "<< New >>"
+msgstr "<< Новые >>"
+
+msgctxt "#40422"
+msgid "<< Search >>"
+msgstr "<< Поиск >>"
+
+msgctxt "#40423"
+msgid "Enter TV Shows title"
+msgstr "Введите название сериала"
+

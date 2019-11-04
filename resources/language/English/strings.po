@@ -631,3 +631,15 @@ msgstr ""
 msgctxt "#40420"
 msgid "Sync favorites to Kodi"
 msgstr ""
+
+msgctxt "#40421"
+msgid "<< New >>"
+msgstr ""
+
+msgctxt "#40422"
+msgid "<< Search >>"
+msgstr ""
+
+msgctxt "#40423"
+msgid "Enter TV Shows title"
+msgstr ""

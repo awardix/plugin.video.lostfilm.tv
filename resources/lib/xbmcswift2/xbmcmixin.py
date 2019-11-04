@@ -263,7 +263,7 @@ class XBMCMixin(object):
     def update_library(library, path=""):
         if isinstance(path, unicode):
             path = path.encode('utf-8')
-        xbmc.executebuiltin('UpdateLibrary(%s, %s)' % (library, path))
+        xbmc.executebuiltin('UpdateLibrary(%s)' % (library))
 
     @staticmethod
     def clean_library(library):

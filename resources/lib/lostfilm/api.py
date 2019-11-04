@@ -13,6 +13,7 @@ class LostFilmApi(AbstractScraper):
         super(LostFilmApi, self).__init__(xrequests_session, cookie_jar)
         self.max_workers = max_workers
         self.response = None
+        self.lf_session = None
         self.session.headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.116 Safari/537.36'
         self.session.headers['Origin'] = 'http://www.lostfilm.tv'
 
@@ -33,6 +34,7 @@ class LostFilmApi(AbstractScraper):
         resp = self.fetch('http://www.lostfilm.tv/my_logout', raw=True)
         result = re.findall(r"session = '([a-f0-9]+)';", resp)
         if len(result):
+            self.lf_session = result[0] 
             return result[0]
         return None
 
@@ -117,3 +119,19 @@ class LostFilmApi(AbstractScraper):
             return resp['data']
         else:
             return []
+
+    def search(self, query):
+        if not self.lf_session:
+            self._get_session()
+        params = {
+            'act': 'common',
+            'type': 'search',
+            'val': query,
+            'session': self.lf_session
+        }
+        resp = self.fetch(self.API_URL, data=params)
+        if 'data' in resp:
+            data = resp['data']
+            if data.get('series'):
+                return data.get('series')
+        return []
