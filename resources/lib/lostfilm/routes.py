@@ -157,7 +157,7 @@ def add_to_library(series_id):
     scraper = get_scraper()
     if series_id not in items:
         items.append(series_id)
-        if plugin.get_setting('sync_add_favorite', bool):
+        if plugin.get_setting('sync_add_remove_favorite', bool):
             scraper.api.favorite(series_id)
     plugin.set_setting('update-library', True)
     xbmc.executebuiltin(actions.refresh())
@@ -168,7 +168,7 @@ def remove_from_library(series_id):
     scraper = get_scraper()
     if series_id in items:
         items.remove(series_id)
-        if plugin.get_setting('sync_remove_favorite', bool):
+        if plugin.get_setting('sync_add_remove_favorite', bool):
             scraper.api.favorite(series_id)
     library_new_episodes().remove_by(series_id=series_id)
     plugin.set_setting('update-library', True)

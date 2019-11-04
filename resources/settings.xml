@@ -53,9 +53,8 @@
         <setting type="bool" id="check_only_favorites" label="40414" default="false"/>
         <setting type="bool" id="enable_sync" label="40415" default="true"/>
         <setting type="lsep" label="40416" />
-        <setting type="bool" id="sync_add_favorite" label="40417" default="false" visible="eq(-2,true)"/>
-        <setting type="bool" id="sync_remove_favorite" label="40418" default="false" visible="eq(-3,true)"/>
-        <setting type="bool" id="sync_mark_watch" label="40419" default="true" visible="eq(-4,true)"/>
-        <setting type="bool" id="sync_favorites" label="40420" default="false" visible="eq(-5,true)"/>
+        <setting type="bool" id="sync_add_remove_favorite" label="40417" default="false" visible="eq(-2,true)"/>
+        <setting type="bool" id="sync_mark_watch" label="40419" default="true" visible="eq(-3,true)"/>
+        <setting type="bool" id="sync_favorites" label="40420" default="false" visible="eq(-4,true)"/>
     </category>
 </settings>

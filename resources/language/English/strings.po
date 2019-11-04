@@ -617,11 +617,7 @@ msgid "Sync action"
 msgstr ""
 
 msgctxt "#40417"
-msgid "Add to favorites"
-msgstr ""
-
-msgctxt "#40418"
-msgid "Remove from favorites"
+msgid "Add/Remove to favorites"
 msgstr ""
 
 msgctxt "#40419"
