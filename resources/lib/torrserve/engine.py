@@ -172,8 +172,13 @@ class Engine(BaseEngine):
         except Exception:
             return None
 
-        res = [FileStatus(index=index, **f)
-            for index, f in enumerate(lst)]
+        try:
+            res = [FileStatus(index=index, **f) for index, f in enumerate(lst)]
+        except:
+            res = []
+            for index, f in enumerate(lst):
+                f.pop('Play')
+                res.append(FileStatus(index=index, **f))
         return res
 
     def file_status(self, file_index):
