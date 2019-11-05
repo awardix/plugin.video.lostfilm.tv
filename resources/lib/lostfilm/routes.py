@@ -231,8 +231,7 @@ def index():
     total = len(episodes)
     header = [
         {'label': lang(40401), 'path': plugin.url_for('browse')},
-        {'label': lang(40407) % new_str, 'path': plugin.url_for('browse_library'), 'context_menu': update_library_menu()},
-        {'label': lang(40411), 'path': plugin.url_for('browse_favorites')},
+        {'label': lang(40407) % new_str, 'path': plugin.url_for('browse_library'), 'context_menu': update_library_menu()}
     ]
     items = []
     if skip:
