@@ -620,6 +620,10 @@ msgctxt "#40417"
 msgid "Add/Remove to favorites"
 msgstr "Добавление/Удаление в избранное"
 
+msgctxt "#40418"
+msgid "<< Trailers >>"
+msgstr "<< Трейлеры >>"
+
 msgctxt "#40419"
 msgid "Sync watched mark"
 msgstr "Отметка о просмотренном"

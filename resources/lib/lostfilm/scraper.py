@@ -16,6 +16,9 @@ from util.timer import Timer
 from support.plugin import plugin
 
 
+class Trailer(namedtuple('Trailer', ['title', 'desc', 'img', 'url'])):
+    pass
+
 class Series(namedtuple('Series', ['id', 'title', 'original_title', 'image', 'icon', 'poster', 'country', 'year',
                                    'genres', 'about', 'actors', 'producers', 'writers', 'plot', 'seasons_count',
                                    'episodes_count'])):
@@ -224,7 +227,7 @@ class LostFilmScraper(AbstractScraper):
                 break
         return ids
 
-    #new
+    # new
     def search_serial(self, query):
         skip = 0
         ids = []
@@ -233,6 +236,28 @@ class LostFilmScraper(AbstractScraper):
             ids_incr = [int(i['id']) for i in r]
             ids.extend(ids_incr)
         return ids
+
+    # new
+    def browse_trailers(self, skip=0):
+        page = (skip or 0)
+        html = self._get_trailers_doc(page)
+        doc = html.find('div', {'class': 'content'})
+        with Timer(logger=self.log, name="Parsing trailer list"):
+            body = doc.find('div', {'class': 'content'})
+            titles = body.find('div', {'class': 'title'}).strings
+            descr = body.find('div', {'class': 'description'}).strings
+            imgs = body.find('img').attrs('src')
+            icons = [url.replace('//', 'http://') for url in imgs]
+            videos = body.find('div', {'class': 'play-btn'}).attrs('data-src')
+            paging = doc.find('div', {'class': 'pagging-pane'})
+            selected_page = paging.find('a', {'class': 'item active'}).text
+            last_page = paging.find('a', {'class': 'item'}).last.text
+            self.has_more = int(selected_page) < int(last_page)
+            data = zip(titles, descr, icons, videos)
+            trailers = [Trailer(*t) for t in data if t[0]]
+            self.log.info("Got %d trailer(s) successfully" % (len(trailers)))
+            self.log.debug(repr(trailers).decode("unicode-escape"))
+        return trailers
 
     # new
     def _get_new_episodes_doc(self, page, favorite=False):
@@ -278,6 +303,11 @@ class LostFilmScraper(AbstractScraper):
     # new
     def _get_episodes_doc(self, series_alias):
         return self.fetch(self.BASE_URL + '/series/%s/seasons/' % series_alias)
+
+    # new
+    def _get_trailers_doc(self, page):
+        page = str(page)
+        return self.fetch(self.BASE_URL + "/video/page_%s/type_1" % (page))
 
     # new
     def get_series_info(self, series_id, series_alias):

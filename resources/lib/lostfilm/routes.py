@@ -6,7 +6,8 @@ import xbmc
 from xbmcswift2 import actions
 from xbmcswift2.common import abort_requested
 from support.plugin import plugin
-from lostfilm.common import select_torrent_link, get_scraper, itemify_episodes, itemify_file, play_torrent, \
+from support import services
+from lostfilm.common import select_torrent_link, get_scraper, itemify_episodes, itemify_trailers, itemify_file, play_torrent, \
     itemify_series, BATCH_SERIES_COUNT, BATCH_EPISODES_COUNT, library_items, update_library_menu, \
     library_new_episodes, NEW_LIBRARY_ITEM_COLOR, check_last_episode, check_first_start, clear_series
 from support.torrent import Torrent
@@ -30,6 +31,9 @@ def play_file(path, file_id):
     torrent = Torrent(file_name=path)
     play_torrent(torrent, file_id)
 
+@plugin.route('/play/<path>')
+def play(path):
+    plugin.set_resolved_url(path)
 
 @plugin.route('/download/<series>/<season>/<episode>')
 def download(series, season, episode):
@@ -69,6 +73,7 @@ def browse():
             {'label': lang(40401), 'path': plugin.url_for('browse_all_series')},
             {'label': lang(40421), 'path': plugin.url_for('browse_new')},
             {'label': lang(40411), 'path': plugin.url_for('browse_favorites')},
+            {'label': lang(40418), 'path': plugin.url_for('browse_trailers')},
             {'label': lang(40422), 'path': plugin.url_for('search')},
     ]
     plugin.add_items(with_fanart(header), len(header))
@@ -94,6 +99,40 @@ def search():
         items = [itemify_series(series[i]) for i in batch_ids]
         plugin.add_items(with_fanart(items), total)
     plugin.finish(sort_methods=['unsorted', 'label'])
+
+@plugin.route('/browse_trailers')
+def browse_trailers():
+    per_page = plugin.get_setting('per-page', int)
+    skip = plugin.request.arg('skip')
+    scraper = get_scraper()
+    trailers = scraper.browse_trailers(skip)
+    items = []
+    if len(trailers) < per_page:
+        skip = (skip or 1) + 1
+        trailers.extend(scraper.browse_trailers(skip))
+    total = len(trailers)
+    if skip > 2:
+        skip_prev = max(skip - 1, 0)
+        total += 1
+        items.append({
+            'label': lang(34003),
+            'path': plugin.request.url_with_params(skip=skip_prev)
+        })
+    plugin.add_items(with_fanart(items), total)
+    for batch_res in batch(trailers, BATCH_EPISODES_COUNT):
+        if abort_requested():
+            break
+        items = itemify_trailers(batch_res)
+        plugin.add_items(with_fanart(items), total)
+    items = []
+    if scraper.has_more:
+        skip_next = (skip or 1) + 1
+        items.append({
+            'label': lang(34004),
+            'path': plugin.request.url_with_params(skip=skip_next)
+        })
+        plugin.add_items(with_fanart(items), len(items))
+    plugin.finish(update_listing=skip > 2)
 
 @plugin.route('/browse_all_series')
 def browse_all_series():
@@ -182,11 +221,11 @@ def index():
     need_clear = plugin.get_setting('clear-cache', bool, default=False)
     if(need_clear):
         clear_series()
+    check_first_start()
     scraper = get_scraper()
     episodes = scraper.browse_episodes(skip)
     if episodes and not skip:
         check_last_episode(episodes[0])
-    check_first_start()
     new_episodes = library_new_episodes()
     new_str = "(%s) " % tf.color(str(len(new_episodes)), NEW_LIBRARY_ITEM_COLOR) if new_episodes else ""
     total = len(episodes)

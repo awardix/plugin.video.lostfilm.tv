@@ -82,6 +82,24 @@ def itemify_episodes(episodes, same_series=False):
     series = scraper.get_series_bulk(series_ids)
     return [itemify_episode(e, series[e.series_id], same_series) for e in episodes]
 
+def itemify_trailers(trailers):
+    items = []
+    for t in trailers:
+        item = {
+            'thumbnail': t.img,
+            'icon': t.img,
+            'label': t.title,
+            'path': plugin.url_for('play', path=t.url),
+            'is_playable': True,
+            'info': {
+                'plot': t.desc,
+            },
+            'properties': {
+                'fanart_image': t.img,
+            }
+        }
+        items.append(item)
+    return items
 
 def episode_label(e, same_series=False):
     """
