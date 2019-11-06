@@ -644,3 +644,7 @@ msgctxt "#40423"
 msgid "Enter TV Shows title"
 msgstr "Введите название сериала"
 
+msgctxt "#40424"
+msgid "Full %d season"
+msgstr "Полный %d сезон"
+

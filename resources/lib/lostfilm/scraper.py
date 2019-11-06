@@ -379,6 +379,17 @@ class LostFilmScraper(AbstractScraper):
             if year:
                 series_title += " (%s)" % year
             for s in seasons:
+                fullseason = s.find('div', {'class': 'movie-details-block'})
+                inactive = fullseason.find('div', {'class': 'external-btn inactive'})
+                if not inactive:
+                    button = fullseason.find('div', {'class': 'haveseen-btn.*?'}).attr('data-code')
+                    series_id, season_number, episode_number = parse_data_code(button)
+                    episode_title = lang(40424) % season_number
+                    orig_title = ""
+                    release_date=str_to_date("17.09.1989", "%d.%m.%Y")
+                    poster = img_url(series_id, season_number, episode_number)
+                    episode = Episode(series_id, series_title, season_number, episode_number, episode_title, orig_title, release_date, icon, poster, image)
+                    episodes.append(episode)
                 episodes_table = s.find('table', {'class': 'movie-parts-list'})
                 if not episodes_table.attrs('id')[0]:
                     self.log.warning("No ID for table. New season of {0}".format(series_title))
@@ -399,8 +410,8 @@ class LostFilmScraper(AbstractScraper):
                     _, season_number, episode_number = parse_data_code(onclick[e])
                     episode_title = episode_titles[e]
                     orig_title = orig_titles[e]
-                    poster = img_url(series_id, season_number, episode_number)
                     release_date = str_to_date(episode_dates[e], "%d.%m.%Y")
+                    poster = img_url(series_id, season_number, episode_number)
                     episode = Episode(series_id, series_title, season_number, episode_number, episode_title, orig_title, release_date, icon, poster, image)
                     episodes.append(episode)
             self.log.info("Got %d episode(s) successfully" % (len(episodes)))
@@ -439,11 +450,16 @@ class LostFilmScraper(AbstractScraper):
 
 def parse_data_code(s):
     res = s.split("-")
-    if res:
+    if len(res) == 3:
         series_id, season, episode = res
         series_id = int(series_id)
         season = int(season)
         return series_id, season, episode
+    elif len(res) == 2:
+        series_id, season = res
+        series_id = int(series_id)
+        season = int(season)
+        return series_id, season, "999"
     else:
         return 0, 0, ""
 

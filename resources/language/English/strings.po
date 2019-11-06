@@ -643,3 +643,7 @@ msgstr ""
 msgctxt "#40423"
 msgid "Enter TV Shows title"
 msgstr ""
+msgctxt "#40424"
+msgid "Full %d season"
+msgstr ""
+
