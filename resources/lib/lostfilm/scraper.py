@@ -383,13 +383,14 @@ class LostFilmScraper(AbstractScraper):
                 inactive = fullseason.find('div', {'class': 'external-btn inactive'})
                 if not inactive:
                     button = fullseason.find('div', {'class': 'haveseen-btn.*?'}).attr('data-code')
-                    series_id, season_number, episode_number = parse_data_code(button)
-                    episode_title = lang(40424) % season_number
-                    orig_title = ""
-                    release_date=str_to_date("17.09.1989", "%d.%m.%Y")
-                    poster = img_url(series_id, season_number, episode_number)
-                    episode = Episode(series_id, series_title, season_number, episode_number, episode_title, orig_title, release_date, icon, poster, image)
-                    episodes.append(episode)
+                    if button:
+                        series_id, season_number, episode_number = parse_data_code(button)
+                        episode_title = lang(40424) % season_number
+                        orig_title = ""
+                        release_date=str_to_date("17.09.1989", "%d.%m.%Y")
+                        poster = img_url(series_id, season_number, episode_number)
+                        episode = Episode(series_id, series_title, season_number, episode_number, episode_title, orig_title, release_date, icon, poster, image)
+                        episodes.append(episode)
                 episodes_table = s.find('table', {'class': 'movie-parts-list'})
                 if not episodes_table.attrs('id')[0]:
                     self.log.warning("No ID for table. New season of {0}".format(series_title))
