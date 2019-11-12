@@ -130,7 +130,7 @@ class LostFilmApi(AbstractScraper):
             'session': self.lf_session
         }
         resp = self.fetch(self.API_URL, data=params)
-        if 'data' in resp:
+        if resp.get('data', False):
             data = resp['data']
             if data.get('series'):
                 return data.get('series')
