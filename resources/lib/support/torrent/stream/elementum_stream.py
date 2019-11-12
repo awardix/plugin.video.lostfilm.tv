@@ -38,8 +38,6 @@ class ElementumStream(TorrentStream):
         file_status = status = None
         if len(torrent.files) < 2:
             file_id = 0
-        else:
-            file_id -= 1
 
         self.log.info("Starting playing file_id {0} with Elementum".format(file_id))
         list_item['path'] = "plugin://plugin.video.elementum/play?uri={0}&index={1}".format(self.url2path(torrent.url), file_id)
