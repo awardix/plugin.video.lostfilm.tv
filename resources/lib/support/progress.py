@@ -31,30 +31,6 @@ class XbmcProgress(AbstractProgress):
         self.dialog.update(percent, *lines)
 
 
-class XbmcFileTransferProgress(AbstractFileTransferProgress):
-    def __init__(self, name=None, size=-1, heading=None):
-        AbstractFileTransferProgress.__init__(self, name, size)
-        self.heading = heading or lang(33000)
-        self.handler = XbmcProgress(heading)
-
-    def open(self):
-        self.handler.open()
-
-    def close(self):
-        self.handler.close()
-
-    def is_cancelled(self):
-        return self.handler.is_cancelled()
-
-    def update(self, percent):
-        lines = []
-        if self.name:
-            lines.append(lang(33001) % {'name': self.name})
-        size = self._human_size(self.size) if self.size >= 0 else lang(33003)
-        lines.append(lang(33002) % ({'transferred': self._human_size(self._transferred_bytes),
-                                     'total': size}))
-        return self.handler.update(percent, *lines)
-
 
 class XbmcTorrentTransferProgress(AbstractTorrentTransferProgress):
     def __init__(self, name=None, size=-1, heading=None):

@@ -324,6 +324,9 @@ class Plugin(XBMCMixin):
     def addon_data_path(self, path=""):
         return os.path.join(xbmc.translatePath('special://profile/addon_data/%s/' % self._addon_id), path)
 
+    def addon_path(self, path=""):
+        return os.path.join(self._addon.getAddonInfo('path').decode('utf-8'), path)
+
     def close_storages(self):
         # Close any open storages which will persist them to disk
         if hasattr(self, '_unsynced_storages'):

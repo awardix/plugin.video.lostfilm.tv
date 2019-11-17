@@ -331,18 +331,6 @@ def refresh_menu():
     return [(lang(40152), actions.refresh())]
 
 
-def download_torrent(torrent):
-    from support import services
-    client = services.torrent_client()
-    path = plugin.get_setting('custom-save-path', unicode) \
-        if plugin.get_setting('use-custom-save-path', bool) \
-        else save_path(local=True)
-    client.add(torrent, path)
-    if plugin.has_addon(client.addon_id) and \
-            xbmcgui.Dialog().yesno(lang(40160), *(lang(40161) % client.addon_name).split("|")):
-        plugin.run_addon(client.addon_id)
-
-
 def run_plugin():
     try:
         plugin.run()

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import support.titleformat as tf
-from support.common import lang, with_fanart, batch, download_torrent, get_torrent
+from support.common import lang, with_fanart, batch, get_torrent
 import xbmc
 from xbmcswift2 import actions
 from xbmcswift2.common import abort_requested
@@ -34,15 +34,6 @@ def play_file(path, file_id):
 @plugin.route('/play/<path>')
 def play(path):
     plugin.set_resolved_url(path)
-
-@plugin.route('/download/<series>/<season>/<episode>')
-def download(series, season, episode):
-    link = select_torrent_link(series, season, episode, force=True)
-    if not link:
-        return
-    torrent = get_torrent(link.url)
-    download_torrent(torrent)
-
 
 @plugin.route('/play_episode/<series>/<season>/<episode>')
 def play_episode(series, season, episode):

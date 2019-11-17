@@ -40,5 +40,7 @@ class ElementumStream(TorrentStream):
             file_id = 0
 
         self.log.info("Starting playing file_id {0} with Elementum".format(file_id))
+        self.log.info("BEFORE: %s" % torrent.url)
         list_item['path'] = "plugin://plugin.video.elementum/play?uri={0}&index={1}".format(self.url2path(torrent.url), file_id)
+        self.log.info("AFTER: %s" % self.url2path(torrent.url))
         player.play(list_item, None)

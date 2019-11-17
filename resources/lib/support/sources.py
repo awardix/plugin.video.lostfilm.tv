@@ -59,7 +59,7 @@ class Sources(object):
         return any((s.path == path or path is None) and (s.label == label or label is None)
                    for s in self.get(media_type))
 
-    def add(self, media_type, path, label):
+    def add(self, media_type, path, label, thumb):
         if self.has(media_type, label):
             raise SourceAlreadyExists(label=label)
         for t in self.xml_tree.getroot():
@@ -67,12 +67,13 @@ class Sources(object):
                 s = ET.SubElement(t, 'source')
                 ET.SubElement(s, 'name').text = label
                 ET.SubElement(s, 'path', {'pathversion': '1'}).text = path
+                ET.SubElement(s, 'thumbnail', {'pathversion': '1'}).text = thumb
                 ET.SubElement(s, 'allowsharing').text = 'true'
                 self.xml_tree.write(self.SOURCES_REAL_PATH, 'utf-8')
                 return
         raise UnknownMediaType(media_type=media_type)
 
-    def add_video(self, path, label, scraper_settings, scan_recursive=False,
+    def add_video(self, path, label, scraper_settings, thumb, scan_recursive=False,
                   use_folder_names=False, no_update=False):
         """
         :type scraper_settings: ScraperSettings
@@ -80,6 +81,6 @@ class Sources(object):
         path = xbmc.translatePath(path)
         if not os.path.exists(path):
             os.mkdir(path)
-        self.add('video', path, label)
+        self.add('video', path, label, thumb)
         with closing(VideoDatabase()) as db:
             db.update_path(path, scraper_settings, scan_recursive, use_folder_names, no_update)
