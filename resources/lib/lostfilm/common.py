@@ -23,14 +23,6 @@ def info_menu(obj):
 def go_to_series_menu(s):
     return [(lang(40307), actions.update_view(series_url(s)))]
 
-''' DEL
-def download_menu(e):
-    from xbmcswift2 import actions
-    if plugin.get_setting('torrent-client', int):
-        return [(lang(40308), actions.background(plugin.url_for('download', series=e.series_id, season=e.season_number, episode=e.episode_number)))]
-    else:
-        return []
-'''
 
 def update_library_menu():
     return [(lang(40311), actions.background(plugin.url_for('update_library_on_demand')))]
