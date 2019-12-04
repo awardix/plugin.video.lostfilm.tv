@@ -314,7 +314,7 @@ class LostFilmScraper(AbstractScraper):
         doc = self._get_series_doc(series_alias)
         with Timer(logger=self.log, name='Parsing series info with ID %s' % series_alias):
             title = doc.find('div', {'class': 'header'})
-            series_title = title.find('h1', {'class': 'title-ru'}).text
+            series_title = title.find('h1', {'class': 'title-ru'}).text.replace(u'й', u'й')
             original_title = title.find('h2', {'class': 'title-en'}).text
             image = img_url(series_id)
             icon = image.replace('poster.jpg', 'image.jpg')
@@ -400,8 +400,8 @@ class LostFilmScraper(AbstractScraper):
                 else:
                     gamma_class = 'gamma'
                 titles = episodes_table.find('td', {'class': gamma_class})
-                orig_titles = [str(t) for t in titles.find('span')]
-                episode_titles = [t.split('\n')[0] for t in titles.strings]
+                orig_titles = titles.find('span').strings
+                episode_titles = [t.split('\n')[0].strip().replace(u"й", u"й") for t in titles.strings]
                 episode_dates = [str(d.split(':')[-1])[1:] for d in episodes_table.find('td', {'class': 'delta'}).strings]
                 onclick = episodes_table.find('div', {'class': 'haveseen-btn.*?'}).attrs('data-code')
                 for e in range(len(onclick)):

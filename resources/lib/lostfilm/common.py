@@ -378,7 +378,7 @@ def update_library():
                 return
         medias = []
         for series_id, episodes in series_episodes.iteritems():
-            medias.extend(library.Episode(folder=e.series_title, title=e.episode_title,
+            medias.extend(library.Episode(folder=e.series_title, title=e.episode_title.replace(u'й', u'й'),
                                           season_number=e.season_number, episode_number=e.episode_numbers,
                                           url=episode_url(e), time_added=e.release_date,
                                           episode=e)
