@@ -427,7 +427,7 @@ class LostFilmScraper(AbstractScraper):
 
     # new
     def get_torrent_links(self, series_id, season_number, episode_number):
-        doc = self.fetch('http://www.lostfilm.tv/v_search.php', {
+        doc = self.fetch(self.BASE_URL + '/v_search.php', {
             'c': series_id,
             's': season_number,
             'e': episode_number
