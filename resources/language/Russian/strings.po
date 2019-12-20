@@ -449,8 +449,8 @@ msgid "Copying..."
 msgstr "Копирую..."
 
 msgctxt "#40164"
-msgid "Use anonymous proxy"
-msgstr "Использовать анонимный прокси"
+msgid "Use AntiZapret proxy"
+msgstr "Использовать прокси AntiZapret"
 
 msgctxt "#40165"
 msgid "Never"

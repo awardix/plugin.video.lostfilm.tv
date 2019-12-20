@@ -49,11 +49,23 @@ def torrent_stream():
     stream = plugin.get_setting('torrent-stream', choices=(ts_stream, elementum_stream))
     return stream()
 
+def antizapret():
+    from support.antizapret import AntiZapret
+    storage = plugin.get_storage()
+    if 'antizapret' not in storage:
+        az = AntiZapret()
+        storage.set('antizapret', az, 24 * 60)
+    else:
+        az = storage['antizapret']
+    return az
+
 def xrequests_session():
     from requests.packages.urllib3.util import Retry
     from support.xrequests import Session
 
-    session = Session(max_retries=Retry(total=2, status_forcelist=[500, 502, 503, 504], backoff_factor=0.3), timeout=5)
+    use_proxy = plugin.get_setting('use_proxy', bool)
+    
+    session = Session(max_retries=Retry(total=2, status_forcelist=[500, 502, 503, 504], backoff_factor=0.3), timeout=5, antizapret=antizapret() if use_proxy else None)
     return session
 
 def torrent(url=None, data=None, file_name=None):

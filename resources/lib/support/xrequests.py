@@ -15,10 +15,11 @@ class XRequestsException(RequestException):
 
 class Session(requests.Session):
 
-    def __init__(self, timeout=None, max_retries=adapters.DEFAULT_RETRIES, **adapter_params):
+    def __init__(self, timeout=None, max_retries=adapters.DEFAULT_RETRIES, antizapret=None, **adapter_params):
         super(Session, self).__init__()
 
         self.timeout = timeout
+        self.antizapret = antizapret
 
         adapter = HTTPAdapter(max_retries=max_retries, session=self, **adapter_params)
         self.mount('http://', adapter)
@@ -38,10 +39,10 @@ class HTTPAdapter(adapters.HTTPAdapter):
         self.log = logging.getLogger(__name__)
         self._lock = threading.Lock()
 
-    def _send(self, request, stream=False, timeout=None, verify=True, cert=None):
+    def _send(self, request, stream=False, timeout=None, verify=True, cert=None, proxies=None):
         if self.debug_headers:
             self.log.debug("Request headers: %r" % request.headers)
-        response = super(HTTPAdapter, self).send(request, stream, timeout, verify, cert)
+        response = super(HTTPAdapter, self).send(request, stream, timeout, verify, cert, proxies)
         if self.debug_headers:
             self.log.debug("Response headers: %r" % response.headers)
         if not stream:
@@ -51,7 +52,9 @@ class HTTPAdapter(adapters.HTTPAdapter):
                 raise requests.exceptions.ReadTimeout(e, request=response.request)
         return response
 
-    def send(self, request, stream=False, timeout=None, verify=True, cert=None, **kwargs):
+    def send(self, request, stream=False, timeout=None, verify=True, cert=None, proxies=None, **kwargs):
         timeout = timeout or self.session.timeout
-        response = self._send(request, stream, timeout, verify, cert)
+        if self.session.antizapret and not proxies:
+            proxies = self.session.antizapret.get_proxy_for_url(request.url)
+        response = self._send(request, stream, timeout, verify, cert, proxies)
         return response

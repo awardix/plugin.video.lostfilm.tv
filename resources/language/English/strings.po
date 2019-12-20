@@ -449,7 +449,7 @@ msgid "Copying..."
 msgstr ""
 
 msgctxt "#40164"
-msgid "Use anonymous proxy"
+msgid "Use AntiZapret proxy"
 msgstr ""
 
 msgctxt "#40165"
