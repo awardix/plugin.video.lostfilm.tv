@@ -10,11 +10,12 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'resources', 'lib'))
 import lostfilm.routes
 from xbmcswift2 import sleep, abort_requested, xbmc
 from support.common import LocalizedError, lang, notify
-from lostfilm.common import update_library, is_authorized
+from lostfilm.common import update_library, is_authorized, check_site
 from support.plugin import plugin
 
 
 def safe_update_library():
+    check_availability()
     try:
         if is_authorized():
             return update_library()
@@ -30,6 +31,37 @@ def safe_update_library():
     finally:
         plugin.close_storages()
     return False
+
+
+def check_availability():
+    use_proxy = plugin.get_setting('use_proxy', bool)
+    plugin.log.info("[1/3] Try open LostFilm.TV")
+    try:
+        res = check_site()
+        code = res.status_code
+        content = res.text
+        if code != 200 or 'LostFilm.TV' not in content: # Если с текущими настройками не лост
+            if not use_proxy:
+                plugin.log.info("[2/3] Can't open LostFilm.TV. Try enable proxy")
+                plugin.set_setting("use_proxy", True)
+            else:
+                plugin.log.info("[2/3] Can't open LostFilm.TV with proxy. Try disable (for some providers is help)")
+                plugin.set_setting("use_proxy", False)
+            res = check_site()
+            code = res.status_code
+            content = res.text
+            if code != 200 or 'LostFilm.TV' not in content: # Если после изменения тоже самое
+                plugin.set_setting("use_proxy", use_proxy)
+                plugin.log.info("[3/3] Can't open LostFilm.TV with and without proxy. Check Internet Cable or use VPN")
+                return False
+            else:
+                plugin.log.info("[3/3] LostFilm.TV is availability!")
+                return True
+        else:
+            plugin.log.info("[3/3] LostFilm.TV is availability without change settings!")
+            return True
+    except Exception as e:
+        plugin.log.error("ERR CHECK_AVAILABLE: %s" % e)
 
 
 if __name__ == '__main__':

@@ -356,6 +356,14 @@ def is_authorized():
     return get_scraper().authorized()
 
 
+def check_site():
+    import requests
+    from support.services import antizapret
+    az = antizapret()
+    r = requests.get('http://www.lostfilm.tv/',  proxies=az.get_proxy_list() if plugin.get_setting('use_proxy', bool) else None)
+    return r
+
+
 def update_library():
     plugin.log.info("Starting LostFilm.TV library update...")
     progress = xbmcgui.DialogProgressBG()
