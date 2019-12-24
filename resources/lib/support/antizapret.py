@@ -24,7 +24,8 @@ class AntiZapret(object):
 
     def load(self):
         try:
-            res = requests.get(self.PAC_URL)
+            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.116 Safari/537.36'}
+            res = requests.get(self.PAC_URL, headers=headers)
             res.raise_for_status()
         except requests.exceptions.RequestException as e:
             log.warn("Coldn't load PAC: %s" % e)
@@ -40,6 +41,6 @@ class AntiZapret(object):
         self.az_proxy = proxy
         self.loaded = True
 
-    def get_proxy_for_url(self, url):
+    def get_proxy_list(self):
         self.ensure_loaded()
         return self.az_proxy

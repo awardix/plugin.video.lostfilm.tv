@@ -55,6 +55,6 @@ class HTTPAdapter(adapters.HTTPAdapter):
     def send(self, request, stream=False, timeout=None, verify=True, cert=None, proxies=None, **kwargs):
         timeout = timeout or self.session.timeout
         if self.session.antizapret and not proxies:
-            proxies = self.session.antizapret.get_proxy_for_url(request.url)
+            proxies = self.session.antizapret.get_proxy_list()
         response = self._send(request, stream, timeout, verify, cert, proxies)
         return response
