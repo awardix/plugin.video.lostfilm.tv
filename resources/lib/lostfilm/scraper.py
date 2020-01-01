@@ -402,7 +402,17 @@ class LostFilmScraper(AbstractScraper):
                 titles = episodes_table.find('td', {'class': gamma_class})
                 orig_titles = titles.find('span').strings
                 episode_titles = [t.split('\n')[0].strip().replace(u"й", u"й") for t in titles.strings]
-                episode_dates = [str(d.split(':')[-1])[1:] for d in episodes_table.find('td', {'class': 'delta'}).strings]
+                #episode_dates = [str(d.split(':')[-1])[1:] for d in episodes_table.find('td', {'class': 'delta'}).strings]
+                episode_dates = []
+                for d in episodes_table.find('td', {'class': 'delta'}).strings:
+                    d = d.split(':')
+                    d = d[-1]
+                    d = d[1:]
+                    d = d.replace('янв ', '01.01.').replace('фев ', '01.02.').replace('мар ', '01.03').replace('апр','01.04')\
+                        .replace('май','01.05').replace('июн','01.06').replace('июл','01.07').replace('авг','01.08').replace('сен','01.09')\
+                        .replace('окт','01.10').replace('ноя','01.11').replace('дек','01.12')
+                    it = str(d)
+                    episode_dates.append(it)
                 onclick = episodes_table.find('div', {'class': 'haveseen-btn.*?'}).attrs('data-code')
                 for e in range(len(onclick)):
                     data_code = onclick[e]

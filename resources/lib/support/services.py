@@ -3,7 +3,7 @@
 from support.common import singleton
 from support.plugin import plugin
 from support.torrent import TorrentClient, TorrentStream
-
+from support.cfscrape import create_scraper
 
 @singleton
 def ts_engine():
@@ -66,7 +66,8 @@ def xrequests_session():
     use_proxy = plugin.get_setting('use_proxy', bool)
     
     session = Session(max_retries=Retry(total=2, status_forcelist=[500, 502, 503, 504], backoff_factor=0.3), timeout=5, antizapret=antizapret() if use_proxy else None)
-    return session
+    scraper = create_scraper(sess=session)
+    return scraper
 
 def torrent(url=None, data=None, file_name=None):
     from support.torrent import Torrent
