@@ -7,7 +7,8 @@ from support.plugin import plugin
 
 
 class LostFilmApi(AbstractScraper):
-    API_URL = "http://www.lostfilm.tv/ajaxik.php"
+    BASE_URL = "https://www.lostfilm.tv"
+    API_URL = BASE_URL + "/ajaxik.php"
 
     def __init__(self, cookie_jar=None, xrequests_session=None, max_workers=10):
         super(LostFilmApi, self).__init__(xrequests_session, cookie_jar)
@@ -15,7 +16,7 @@ class LostFilmApi(AbstractScraper):
         self.response = None
         self.lf_session = None
         self.session.headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.116 Safari/537.36'
-        self.session.headers['Origin'] = 'http://www.lostfilm.tv'
+        self.session.headers['Origin'] = self.BASE_URL
 
     def fetch(self, url, params=None, data=None, forced_encoding=None, raw=False, **request_params):
         self.response = super(LostFilmApi, self).fetch(url, params, data, **request_params)
@@ -31,7 +32,7 @@ class LostFilmApi(AbstractScraper):
         return resp
 
     def _get_session(self):
-        resp = self.fetch('http://www.lostfilm.tv/my_logout', raw=True)
+        resp = self.fetch(self.BASE_URL + '/my_logout', raw=True)
         result = re.findall(r"session = '([a-f0-9]+)';", resp)
         if len(result):
             self.lf_session = result[0] 

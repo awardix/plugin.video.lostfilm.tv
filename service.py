@@ -15,24 +15,27 @@ from support.plugin import plugin
 
 
 def safe_update_library():
-    check_availability()
-    try:
-        if is_authorized():
-            return update_library()
-    except LocalizedError as e:
-        e.log()
-        if e.kwargs.get('dialog'):
-            xbmcgui.Dialog().ok(lang(30000), *e.localized.split("|"))
-        else:
-            notify(e.localized)
-    except Exception as e:
-        plugin.log.exception(e)
-        notify(lang(40410))
-    finally:
-        plugin.close_storages()
-    return False
+    if check_availability():
+        try:
+            if is_authorized():
+                return update_library()
+        except LocalizedError as e:
+            e.log()
+            if e.kwargs.get('dialog'):
+                xbmcgui.Dialog().ok(lang(30000), *e.localized.split("|"))
+            else:
+                notify(e.localized)
+        except Exception as e:
+            plugin.log.exception(e)
+            notify(lang(40410))
+        finally:
+            plugin.close_storages()
+        return False
+    else:
+        notify(lang(40425))
+        return False
 
-
+ 
 def check_availability():
     use_proxy = plugin.get_setting('use_proxy', bool)
     plugin.log.info("[1/3] Try open LostFilm.TV")
@@ -62,6 +65,7 @@ def check_availability():
             return True
     except Exception as e:
         plugin.log.error("ERR CHECK_AVAILABLE: %s" % e)
+        return False
 
 
 if __name__ == '__main__':

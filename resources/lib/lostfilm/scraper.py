@@ -76,7 +76,7 @@ TorrentLink = namedtuple('TorrentLink', ['quality', 'url', 'size'])
 
 
 class LostFilmScraper(AbstractScraper):
-    BASE_URL = "http://www.lostfilm.tv"
+    BASE_URL = "https://www.lostfilm.tv"
     BLOCKED_MESSAGE = "Контент недоступен на территории Российской Федерации"
 
     def __init__(self, login, password, cookie_jar=None, xrequests_session=None, series_cache=None, shows_ids_cache=None, max_workers=10):
@@ -90,7 +90,7 @@ class LostFilmScraper(AbstractScraper):
         self.password = password
         self.has_more = None
         self.session.headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.116 Safari/537.36'
-        self.session.headers['Origin'] = 'http://www.lostfilm.tv'
+        self.session.headers['Origin'] = self.BASE_URL
 
     def fetch(self, url, params=None, data=None, forced_encoding=None, **request_params):
         self.response = super(LostFilmScraper, self).fetch(url, params, data, **request_params)

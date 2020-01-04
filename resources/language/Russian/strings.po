@@ -648,3 +648,6 @@ msgctxt "#40424"
 msgid "Full %d season"
 msgstr "Полный %d сезон"
 
+msgctxt "#40425"
+msgid "Failed check open site"
+msgstr "Проблема с обходом блокировок![CR]Используйте [COLOR FFFF0000][B]VPN[/B][/COLOR]."
