@@ -396,10 +396,9 @@ class LostFilmScraper(AbstractScraper):
                     self.log.warning("No ID for table. New season of {0}".format(series_title))
                     continue
                 if episodes_table.attrs('id')[0][-6:] == u'999999':
-                    gamma_class = 'gamma additional'
-                else:
-                    gamma_class = 'gamma'
-                titles = episodes_table.find('td', {'class': gamma_class})
+                    pass
+                    # IS SPECIAL SEASON
+                titles = episodes_table.find('td', {'class': 'gamma.*?'})
                 orig_titles = titles.find('span').strings
                 episode_titles = [t.split('\n')[0].strip().replace(u"й", u"й") for t in titles.strings]
                 #episode_dates = [str(d.split(':')[-1])[1:] for d in episodes_table.find('td', {'class': 'delta'}).strings]
