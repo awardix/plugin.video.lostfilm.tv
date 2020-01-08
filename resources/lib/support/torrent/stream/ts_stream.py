@@ -74,6 +74,8 @@ class TorrServeStream(TorrentStream):
                     self.engine.uri = torrent.url
                     if len(torrent.files) < 2:
                         file_id = 0
+                    else:
+                        file_id -= 1
                     self.engine.start(file_id)
                     ready = False
 

@@ -29,6 +29,7 @@ def browse_season(series, season):
 @plugin.route('/play_file/<path>/<file_id>')
 def play_file(path, file_id):
     torrent = Torrent(file_name=path)
+    file_id += 1
     play_torrent(torrent, file_id)
 
 @plugin.route('/play/<path>')
