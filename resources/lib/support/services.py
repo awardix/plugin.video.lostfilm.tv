@@ -65,7 +65,7 @@ def xrequests_session():
 
     use_proxy = plugin.get_setting('use_proxy', bool)
     
-    session = Session(max_retries=Retry(total=2, status_forcelist=[500, 502, 503, 504], backoff_factor=0.3), timeout=5, antizapret=antizapret() if use_proxy else None)
+    session = Session(max_retries=Retry(total=3, status_forcelist=[500, 502, 503, 504, 104], backoff_factor=0.3), timeout=5, antizapret=antizapret() if use_proxy else None)
     scraper = create_scraper(sess=session)
     return scraper
 
