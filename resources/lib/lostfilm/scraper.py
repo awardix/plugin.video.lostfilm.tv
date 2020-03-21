@@ -400,7 +400,7 @@ class LostFilmScraper(AbstractScraper):
                     # IS SPECIAL SEASON
                 titles = episodes_table.find('td', {'class': 'gamma.*?'})
                 orig_titles = titles.find('span').strings
-                episode_titles = [t.split('\n')[0].strip().replace(u"й", u"й") for t in titles.strings]
+                episode_titles = [t.split('\n')[0].strip().replace(u"й", u"й").replace(u"И", u"Й") for t in titles.strings]
                 #episode_dates = [str(d.split(':')[-1])[1:] for d in episodes_table.find('td', {'class': 'delta'}).strings]
                 episode_dates = []
                 for d in episodes_table.find('td', {'class': 'delta'}).strings:
